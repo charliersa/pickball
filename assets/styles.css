@@ -219,7 +219,7 @@ html, body {
 
 /* 球場 / 比分主區 */
 .board { flex: 1; display: grid; grid-template-columns: 1fr minmax(220px, 0.62fr) 1fr; min-height: 0; }
-@media (max-width: 860px) { .board { grid-template-columns: 1fr 0.5fr 1fr; } }
+@media (max-width: 860px) { .board { grid-template-columns: 1fr 0.45fr 1fr; } }
 
 .team-panel {
   position: relative; cursor: pointer; user-select: none;
@@ -433,15 +433,128 @@ html, body {
 .hi-scores span.win { color: var(--gold); }
 .hi-trophy { color: var(--gold); width: 17px; height: 17px; }
 
-/* 小螢幕 */
-@media (max-width: 560px) {
-  .tp-name { font-size: 18px; }
-  .players { max-width: 100%; }
-  .player { padding: 7px 10px; gap: 7px; }
-  .center-col { padding: 10px 4px; gap: 12px; }
+/* ============================================================
+   響應式 — 平板 & 手機
+   ============================================================ */
+
+/* 小平板 / 橫式手機（< 700px）：收起 topbar 細節 */
+@media (max-width: 700px) {
+  .board { grid-template-columns: 1fr 0.38fr 1fr; }
+  .topbar { padding: 8px 12px; gap: 8px; }
+  .topbar .chip { display: none; }
+  .games-pips { display: none; }
+  .topbar .event .nm { font-size: 14px; }
+  .tp-score { font-size: clamp(100px, 20vw, 200px); }
+  .players { display: none; }
+  .center-col { padding: 12px 6px; gap: 10px; }
   .court { --cw: 130px; }
-  .controls { gap: 7px; padding: 10px; flex-wrap: wrap; }
+}
+
+/* ---- 手機豎式（< 560px）：垂直三排版型 ---- */
+@media (max-width: 560px) {
+
+  /* Topbar */
+  .topbar { padding: 8px 10px; gap: 8px; }
+  .topbar .event .nm { font-size: 13px; max-width: 150px; }
+  .icon-btn { width: 36px; height: 36px; }
+  .icon-btn svg { width: 17px; height: 17px; }
+
+  /* Board → 單欄三排 */
+  .board {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto 1fr;
+  }
+
+  /* Team panel → 橫向（左=文字，右=大分數）*/
+  .team-panel {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 28px 18px;
+    gap: 8px;
+  }
+  .team-panel::before {
+    background: radial-gradient(100% 130% at 100% 50%, var(--tc-fade), transparent 65%);
+  }
+  .team-panel.serving::after {
+    left: 0; right: auto;
+    top: 0; bottom: 0;
+    width: 4px; height: auto;
+    box-shadow: 4px 0 20px var(--serve);
+  }
+
+  /* 左側：隊名 + 球員 */
+  .tp-top { align-items: flex-start; gap: 5px; width: auto; flex: 1; min-width: 0; }
+  .tp-bar { width: 30px; height: 4px; align-self: flex-start; }
+  .tp-name { font-size: clamp(15px, 4.2vw, 22px); text-align: left; }
+  .players { display: flex; max-width: 100%; }
+  .player { padding: 5px 8px; font-size: 12px; gap: 5px; border-radius: 8px; }
+  .player .pos { display: none; }
+
+  /* 右側：大分數 */
+  .tp-score {
+    font-size: clamp(80px, 17vh, 150px);
+    margin: 0; line-height: 1;
+    flex: none; min-width: 70px; text-align: right;
+    position: relative; z-index: 1;
+  }
+
+  /* 局勝圓點 → 右下角 */
+  .tp-gamewins { position: absolute; bottom: 7px; right: 16px; z-index: 1; }
+  .gw { width: 11px; height: 11px; }
+
+  /* 局點/賽末點 → 左下角 */
+  .gp-flag {
+    position: absolute; bottom: 6px; left: 18px; right: auto;
+    margin-top: 0; font-size: 10px; padding: 3px 9px; z-index: 2; transform: none;
+  }
+
+  /* 中央欄 → 橫向帶狀 */
+  .center-col {
+    flex-direction: row;
+    justify-content: center; align-items: center;
+    padding: 8px 14px; gap: 16px;
+    border-left: none; border-right: none;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .court { --cw: 72px; }
+  .court-cap { display: none; }
+  .scorecall .sc-label { font-size: 10px; margin-bottom: 3px; }
+  .scorecall .sc-nums { font-size: clamp(24px, 7.5vw, 42px); gap: 7px; }
+
+  /* 控制列 */
+  .controls { padding: 8px 12px; gap: 8px; }
+  .controls .spacer { display: none; }
   .controls .hint { display: none; }
-  .topbar { padding: 10px 12px; gap: 10px; }
-  .topbar .event .nm { font-size: 14px; max-width: 130px; }
+  .btn { font-size: 13px; padding: 10px 13px; gap: 6px; }
+  .btn svg { width: 15px; height: 15px; }
+
+  /* 換邊提示 */
+  .switch-banner { top: 48px; font-size: 12px; padding: 7px 14px; gap: 7px; }
+
+  /* 設定畫面 */
+  .setup { padding: 18px 14px 40px; gap: 14px; }
+  .setup-head h1 { font-size: 20px; }
+  .setup-head p { font-size: 13px; }
+  .brand-mark { width: 42px; height: 42px; border-radius: 11px; }
+  .brand-mark svg { width: 24px; height: 24px; }
+  .card { padding: 16px; }
+  .seg button { font-size: 13px; padding: 8px 12px; }
+  .setup-foot { flex-direction: column; }
+  .setup-foot .btn { width: 100%; justify-content: center; font-size: 15px; padding: 14px; }
+}
+
+/* 橫式手機（< 500px 高）*/
+@media (max-height: 500px) and (orientation: landscape) {
+  .tp-score { font-size: clamp(52px, 14vh, 100px); }
+  .players { display: none; }
+  .team-panel { padding: 6px 14px 6px 16px; }
+  .topbar { padding: 5px 12px; }
+  .controls { padding: 5px 12px; }
+  .center-col { padding: 6px 10px; gap: 10px; }
+  .court { --cw: 62px; }
+  .scorecall .sc-nums { font-size: clamp(20px, 5.5vh, 34px); }
+  .tp-gamewins { bottom: 4px; }
+  .gp-flag { bottom: 4px; font-size: 9px; padding: 2px 7px; }
 }
