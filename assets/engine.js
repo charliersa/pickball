@@ -80,6 +80,23 @@
     }
   }
 
+  // 直接輸入「本局最終比分」記一局（輸入計分模式用）
+  // a, b = 隊0 / 隊1 的最終分數。回傳 { st, ok, reason }
+  function applyGameScore(prev, a, b) {
+    a = parseInt(a, 10); b = parseInt(b, 10);
+    if (prev.matchOver) return { st: prev, ok: false, reason: "比賽已結束" };
+    if (isNaN(a) || isNaN(b) || a < 0 || b < 0) return { st: prev, ok: false, reason: "請輸入有效分數" };
+    if (a === b) return { st: prev, ok: false, reason: "兩隊分數不能相同" };
+    var hi = Math.max(a, b), lo = Math.min(a, b);
+    if (hi < prev.config.target) return { st: prev, ok: false, reason: "勝方需達 " + prev.config.target + " 分" };
+    if (hi - lo < 2) return { st: prev, ok: false, reason: "需領先 2 分" };
+    var st = clone(prev);
+    st.switchEnds = false;
+    st.scores = [a, b];
+    finishGame(st, a > b ? 0 : 1); // 依比分判該局勝方，沿用既有記局邏輯
+    return { st: st, ok: true, reason: "" };
+  }
+
   // winner = 贏得「這一球 rally」的隊伍 index (0/1)
   function applyRally(prev, winner) {
     if (prev.matchOver) return prev;
@@ -177,6 +194,7 @@
   window.PB = {
     createMatch: createMatch,
     applyRally: applyRally,
+    applyGameScore: applyGameScore,
     serveInfo: serveInfo,
     scoreCall: scoreCall,
     gamePointInfo: gamePointInfo,

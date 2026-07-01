@@ -124,7 +124,79 @@ function ScoreCall({ st }) {
   );
 }
 
-function Scoreboard({ st, displaySwap, onRally, onUndo, canUndo, onSwap, onHistory, onSettings }) {
+// 輸入計分模式：逐局輸入最終比分
+function ScoreInputPanel({ st, onGameScore }) {
+  const [a, setA] = React.useState("");
+  const [b, setB] = React.useState("");
+  const [err, setErr] = React.useState("");
+  const target = st.config.target;
+  const teamA = st.config.teams[0], teamB = st.config.teams[1];
+
+  function confirm() {
+    const na = parseInt(a, 10), nb = parseInt(b, 10);
+    if (isNaN(na) || isNaN(nb)) { setErr("請輸入兩隊分數"); return; }
+    if (na === nb) { setErr("兩隊分數不能相同"); return; }
+    const hi = Math.max(na, nb), lo = Math.min(na, nb);
+    if (hi < target) { setErr(`勝方需達 ${target} 分`); return; }
+    if (hi - lo < 2) { setErr("需領先 2 分"); return; }
+    setErr("");
+    onGameScore(na, nb);
+    setA(""); setB("");
+  }
+
+  const teamRow = (t, val, setVal, color) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <span style={{ width: 12, height: 12, borderRadius: 3, background: color, flex: "0 0 auto" }} />
+      <div style={{ flex: 1, minWidth: 0, fontWeight: 800, fontSize: 17, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {t.name}
+        <span style={{ color: "var(--muted)", fontWeight: 600, fontSize: 13, marginLeft: 8 }}>{t.players.join("・")}</span>
+      </div>
+      <input
+        className="input" type="number" inputMode="numeric" min="0" value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") confirm(); }}
+        style={{ width: 96, marginBottom: 0, textAlign: "center", fontSize: 26, fontWeight: 800, fontFamily: "var(--font-num)", padding: "8px 10px" }}
+        placeholder="0"
+      />
+    </div>
+  );
+
+  return (
+    <div className="board" style={{ display: "block", padding: "8px 4px" }}>
+      <div className="card" style={{ maxWidth: 460, margin: "0 auto" }}>
+        <h2 style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span>第 {st.gameIndex + 1} 局 · 輸入最終比分</span>
+          <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600 }}>{target} 分 · 領先 2 分</span>
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 6 }}>
+          {teamRow(teamA, a, setA, teamA.color)}
+          {teamRow(teamB, b, setB, teamB.color)}
+        </div>
+        {err && <div style={{ color: "var(--danger)", fontWeight: 700, fontSize: 13, marginTop: 12 }}>{err}</div>}
+        <button className="btn primary" onClick={confirm} style={{ width: "100%", justifyContent: "center", marginTop: 16 }}>
+          確認本局 →
+        </button>
+        {st.completed.length > 0 && (
+          <div style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 8 }}>已完成局數</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {st.completed.map((g, i) => (
+                <span key={i} style={{ fontFamily: "var(--font-num)", fontWeight: 700, fontSize: 15, background: "var(--panel-2)", border: "1px solid var(--line)", borderRadius: 8, padding: "4px 10px" }}>
+                  <span style={{ color: g.winner === 0 ? "var(--gold)" : "var(--ink)" }}>{g.scores[0]}</span>
+                  <span style={{ color: "var(--muted)", margin: "0 5px" }}>:</span>
+                  <span style={{ color: g.winner === 1 ? "var(--gold)" : "var(--ink)" }}>{g.scores[1]}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Scoreboard({ st, displaySwap, onRally, onGameScore, onUndo, canUndo, onSwap, onHistory, onSettings }) {
+  const [inputMode, setInputMode] = React.useState(false);
   const order = displaySwap ? [1, 0] : [0, 1];
   const showSwitch = st.switchEnds;
   const ruleLabel = st.config.rule === "rally" ? "Rally 制" : "發球得分制";
@@ -164,20 +236,30 @@ function Scoreboard({ st, displaySwap, onRally, onUndo, canUndo, onSwap, onHisto
         <div className="switch-banner"><Icon name="swap" width="18" height="18" /> 請交換場邊 · 第 {st.gameIndex + 1} 局</div>
       )}
 
-      <div className="board">
-        <TeamPanel st={st} team={order[0]} side="left" onRally={onRally} />
-        <div className="center-col">
-          <ScoreCall st={st} />
-          <Court st={st} />
+      {inputMode ? (
+        <ScoreInputPanel st={st} onGameScore={onGameScore} />
+      ) : (
+        <div className="board">
+          <TeamPanel st={st} team={order[0]} side="left" onRally={onRally} />
+          <div className="center-col">
+            <ScoreCall st={st} />
+            <Court st={st} />
+          </div>
+          <TeamPanel st={st} team={order[1]} side="right" onRally={onRally} />
         </div>
-        <TeamPanel st={st} team={order[1]} side="right" onRally={onRally} />
-      </div>
+      )}
 
       <div className="controls">
         <button className="btn" onClick={onUndo} disabled={!canUndo}><Icon name="undo" /> 回上一步</button>
-        <button className="btn ghost" onClick={onSwap}><Icon name="swap" /> 交換顯示</button>
+        {!inputMode && <button className="btn ghost" onClick={onSwap}><Icon name="swap" /> 交換顯示</button>}
+        <div className="seg" style={{ marginLeft: 4 }}>
+          <button className={!inputMode ? "on" : ""} onClick={() => setInputMode(false)}>點擊</button>
+          <button className={inputMode ? "on" : ""} onClick={() => setInputMode(true)}>輸入</button>
+        </div>
         <div className="spacer" />
-        <span className="hint">點擊<b>贏得該球</b>的一方記分</span>
+        <span className="hint">
+          {inputMode ? <>輸入<b>本局最終比分</b>後按確認</> : <>點擊<b>贏得該球</b>的一方記分</>}
+        </span>
       </div>
     </div>
   );

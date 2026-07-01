@@ -156,25 +156,41 @@ function App() {
     broadcast(m, [], tournament);
   }
 
+  // 比賽剛結束時：存歷史紀錄 +（若為賽事場次）回填賽事，回傳最新的 tournament
+  function recordMatchEnd(next) {
+    const rec = buildRecord(next);
+    setRecords((r) => { const nr = [rec, ...r]; persistRecords(nr); return nr; });
+    justSaved.current = true;
+    const ref = next.config.tournamentRef;
+    if (ref && tournament) {
+      const after = ref.phase === "ko"
+        ? TB.applyKoResult(tournament, ref.division, ref.id, next)
+        : TB.applyMatchResult(tournament, ref.division, ref.id, next);
+      setTournament(after);
+      return after;
+    }
+    return tournament;
+  }
+
   function handleRally(team) {
     if (!st || st.matchOver) return;
     const next = PB.applyRally(st, team);
     const newUndo = [...undoStack, PB.clone(st)];
     setUndoStack(newUndo);
-    let nextTournament = tournament;
-    if (next.matchOver && !st.matchOver) {
-      const rec = buildRecord(next);
-      setRecords((r) => { const nr = [rec, ...r]; persistRecords(nr); return nr; });
-      justSaved.current = true;
-      // 賽事比賽結束 → 把結果回填賽事
-      const ref = next.config.tournamentRef;
-      if (ref && tournament) {
-        nextTournament = ref.phase === "ko"
-          ? TB.applyKoResult(tournament, ref.division, ref.id, next)
-          : TB.applyMatchResult(tournament, ref.division, ref.id, next);
-        setTournament(nextTournament);
-      }
-    }
+    const nextTournament = (next.matchOver && !st.matchOver) ? recordMatchEnd(next) : tournament;
+    setSt(next);
+    broadcast(next, newUndo, nextTournament);
+  }
+
+  // 輸入計分模式：直接記一局最終比分
+  function handleGameScore(a, b) {
+    if (!st || st.matchOver) return;
+    const res = PB.applyGameScore(st, a, b);
+    if (!res.ok) return; // UI 已先驗證，這裡再保險
+    const next = res.st;
+    const newUndo = [...undoStack, PB.clone(st)];
+    setUndoStack(newUndo);
+    const nextTournament = (next.matchOver && !st.matchOver) ? recordMatchEnd(next) : tournament;
     setSt(next);
     broadcast(next, newUndo, nextTournament);
   }
@@ -265,6 +281,7 @@ function App() {
           displaySwap={displaySwap}
           canUndo={undoStack.length > 0}
           onRally={handleRally}
+          onGameScore={handleGameScore}
           onUndo={handleUndo}
           onSwap={() => setDisplaySwap((v) => !v)}
           onHistory={() => setShowHistory(true)}
