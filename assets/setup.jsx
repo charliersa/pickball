@@ -3,7 +3,7 @@
    ============================================================ */
 const COLOR_OPTS = ["#19C3FB", "#FF5B3A", "#C7F03A", "#A66BFF", "#FF4D9D", "#2BD4A8", "#FFC53D", "#5B8CFF"];
 
-function SetupScreen({ onStart, initial, resumable, onResume }) {
+function SetupScreen({ onStart, initial, resumable, onResume, onTournament }) {
   const [event, setEvent] = React.useState(initial?.event ?? "匹克球友誼賽");
   const [mode, setMode] = React.useState(initial?.mode ?? "doubles");
   const [target, setTarget] = React.useState(initial?.target ?? 11);
@@ -122,6 +122,7 @@ function SetupScreen({ onStart, initial, resumable, onResume }) {
 
         <div className="setup-foot">
           {resumable && <button className="btn ghost" onClick={onResume}>← 返回目前比賽</button>}
+          {onTournament && <button className="btn ghost" onClick={onTournament}>🏆 多組賽事分配</button>}
           <button className="btn primary" onClick={start}>{resumable ? "開新比賽 →" : "開始比賽 →"}</button>
         </div>
       </div>

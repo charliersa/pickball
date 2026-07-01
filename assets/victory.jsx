@@ -32,7 +32,7 @@ function Confetti({ colors }) {
   );
 }
 
-function VictoryOverlay({ st, onNew, onHistory }) {
+function VictoryOverlay({ st, onNew, onHistory, newLabel }) {
   const w = st.matchWinner;
   const team = st.config.teams[w];
   const loser = st.config.teams[1 - w];
@@ -56,7 +56,7 @@ function VictoryOverlay({ st, onNew, onHistory }) {
         </div>
         <div className="champ-actions">
           <button className="btn ghost" onClick={onHistory}><Icon name="history" /> 查看紀錄</button>
-          <button className="btn primary" onClick={onNew}><Icon name="home" /> 新比賽</button>
+          <button className="btn primary" onClick={onNew}><Icon name="home" /> {newLabel || "新比賽"}</button>
         </div>
       </div>
     </>
