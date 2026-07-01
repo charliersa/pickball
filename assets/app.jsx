@@ -15,6 +15,8 @@ if (new URLSearchParams(location.search).has('reset')) {
 
 // 由賽事的一場比賽組出計分板 config；tournamentRef 讓比賽結束後可回填賽事
 function tournamentMatchConfig(t, phase, m) {
+  const di = m.division;
+  const d = t.divisions[di];
   const bestOf = phase === "ko" ? (t.koBestOf || 3) : (t.groupBestOf || 1);
   let teamA, teamB;
   if (phase === "ko") {
@@ -23,15 +25,18 @@ function tournamentMatchConfig(t, phase, m) {
     if (c1 === m.teams[0].color) c1 = "#FF5B3A";
     teamB = { name: m.teams[1].players.join("・"), color: c1, players: m.teams[1].players.slice() };
   } else {
-    teamA = { name: m.teams[0].join("・"), color: "#19C3FB", players: m.teams[0].slice() };
-    teamB = { name: m.teams[1].join("・"), color: "#FF5B3A", players: m.teams[1].slice() };
+    const pa = d.pairs[m.pairIdx[0]], pb = d.pairs[m.pairIdx[1]];
+    teamA = { name: pa.players.join("・"), color: pa.color, players: pa.players.slice() };
+    let c1 = pb.color;
+    if (c1 === pa.color) c1 = "#FF5B3A";
+    teamB = { name: pb.players.join("・"), color: c1, players: pb.players.slice() };
   }
-  const label = phase === "ko" ? m.roundName : t.groups[m.group].name;
+  const label = d.level + "級 · " + (phase === "ko" ? m.roundName : ("第" + (m.round + 1) + "輪"));
   return {
     event: t.event + " · " + label,
     mode: "doubles", target: t.target, rule: t.rule, bestOf,
     teams: [teamA, teamB], firstServe: 0,
-    tournamentRef: { phase: phase, id: m.id },
+    tournamentRef: { division: di, phase: phase, id: m.id },
   };
 }
 
@@ -44,7 +49,7 @@ class ErrorBoundary extends React.Component {
       <div style={{ padding: 32, color: '#FF5B5B', fontFamily: 'monospace', fontSize: 14 }}>
         <b>畫面渲染錯誤（React crash）</b><br /><br />
         {String(this.state.err)}<br /><br />
-        <button onClick={() => { localStorage.removeItem(LS_CURRENT); location.reload(); }}
+        <button onClick={() => { localStorage.removeItem(LS_CURRENT); localStorage.removeItem(LS_TOURNAMENT); location.reload(); }}
           style={{ padding: '8px 16px', cursor: 'pointer', background: '#1A2843', color: '#EEF3FF', border: '1px solid #FF5B5B', borderRadius: 8 }}>
           清除存檔並重新載入
         </button>
@@ -69,6 +74,19 @@ function saveJSON(key, v) {
   try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
 }
 
+// 只接受目前的雙級別賽事格式；舊版存檔（無 divisions）一律丟棄，避免 crash
+function isValidTournament(t) {
+  return !!(t && Array.isArray(t.divisions) && t.divisions.every(
+    (d) => d && Array.isArray(d.pairs) && Array.isArray(d.matches)
+  ));
+}
+function loadTournament() {
+  const t = loadJSON(LS_TOURNAMENT, null);
+  if (isValidTournament(t)) return t;
+  if (t) localStorage.removeItem(LS_TOURNAMENT); // 清掉不相容的舊存檔
+  return null;
+}
+
 function buildRecord(st) {
   return {
     event: st.config.event,
@@ -90,7 +108,7 @@ function App() {
   const [undoStack, setUndoStack] = React.useState(saved.current?.undoStack ?? []);
   const [displaySwap, setDisplaySwap] = React.useState(saved.current?.displaySwap ?? false);
   const [records, setRecords] = React.useState(loadJSON(LS_RECORDS, []));
-  const [tournament, setTournament] = React.useState(loadJSON(LS_TOURNAMENT, null));
+  const [tournament, setTournament] = React.useState(loadTournament());
   const [showHistory, setShowHistory] = React.useState(false);
   const justSaved = React.useRef(false);
   const socketRef = React.useRef(null);
@@ -115,7 +133,7 @@ function App() {
     s.on('state:sync', ({ st: newSt, undoStack: newUndo, tournament: newT }) => {
       setSt(newSt ?? null);
       setUndoStack(newUndo ?? []);
-      if (newT !== undefined) setTournament(newT ?? null);
+      if (newT !== undefined) setTournament(isValidTournament(newT) ? newT : null);
       if (newSt) setScreen("match");
     });
     return () => { s.disconnect(); socketRef.current = null; };
@@ -152,8 +170,8 @@ function App() {
       const ref = next.config.tournamentRef;
       if (ref && tournament) {
         nextTournament = ref.phase === "ko"
-          ? TB.applyKoResult(tournament, ref.id, next)
-          : TB.applyMatchResult(tournament, ref.id, next);
+          ? TB.applyKoResult(tournament, ref.division, ref.id, next)
+          : TB.applyMatchResult(tournament, ref.division, ref.id, next);
         setTournament(nextTournament);
       }
     }
@@ -191,15 +209,15 @@ function App() {
     setTournament(null);
     broadcast(st, undoStack, null);
   }
-  function handleBuildKnockout() {
+  function handleBuildKnockout(division) {
     if (!tournament) return;
-    const after = TB.buildKnockout(tournament);
+    const after = TB.buildKnockout(tournament, division);
     setTournament(after);
     broadcast(st, undoStack, after);
   }
-  function startTournamentMatch(phase, id) {
+  function startTournamentMatch(division, phase, id) {
     if (!tournament) return;
-    const m = TB.findMatch(tournament, id);
+    const m = TB.findMatch(tournament, division, id);
     if (!m || !TB.matchReady(m)) return;
     const cfg = tournamentMatchConfig(tournament, phase, m);
     const match = PB.createMatch(cfg);
