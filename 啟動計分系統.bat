@@ -7,6 +7,9 @@ start "計分伺服器" cmd /k "cd /d "%~dp0" && node server.js"
 
 timeout /t 2 >nul
 
+echo 正在開啟計分畫面並重置舊資料...
+start "計分畫面" http://localhost:3000/?reset
+
 echo 正在建立手機連線通道...
 start "手機連線通道" cmd /k "cloudflared tunnel --url http://localhost:3000 --no-autoupdate"
 

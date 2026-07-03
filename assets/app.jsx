@@ -11,6 +11,9 @@ if (new URLSearchParams(location.search).has('reset')) {
   localStorage.removeItem(LS_RECORDS);
   localStorage.removeItem(LS_TOURNAMENT);
   history.replaceState(null, '', '/');
+} else {
+  // 每次載入頁面都先清掉上一次的比賽狀態，維持在首頁
+  localStorage.removeItem(LS_CURRENT);
 }
 
 // 由賽事的一場比賽組出計分板 config；tournamentRef 讓比賽結束後可回填賽事
@@ -102,11 +105,11 @@ function buildRecord(st) {
 }
 
 function App() {
-  const saved = React.useRef(loadJSON(LS_CURRENT, null));
-  const [screen, setScreen] = React.useState(saved.current && saved.current.st ? "match" : "setup");
-  const [st, setSt] = React.useState(saved.current?.st ?? null);
-  const [undoStack, setUndoStack] = React.useState(saved.current?.undoStack ?? []);
-  const [displaySwap, setDisplaySwap] = React.useState(saved.current?.displaySwap ?? false);
+  // 每次開啟頁面都預設回到首頁，不自動恢復上一次的比賽
+  const [screen, setScreen] = React.useState("setup");
+  const [st, setSt] = React.useState(null);
+  const [undoStack, setUndoStack] = React.useState([]);
+  const [displaySwap, setDisplaySwap] = React.useState(false);
   const [records, setRecords] = React.useState(loadJSON(LS_RECORDS, []));
   const [tournament, setTournament] = React.useState(loadTournament());
   const [showHistory, setShowHistory] = React.useState(false);
