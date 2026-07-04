@@ -558,3 +558,63 @@ html, body {
   .tp-gamewins { bottom: 4px; }
   .gp-flag { bottom: 4px; font-size: 9px; padding: 2px 7px; }
 }
+
+/* ---------- 選手報名（/register）---------- */
+.reg-toast {
+  margin-top: 12px;
+  background: rgba(199,240,58,0.12);
+  border: 1px solid var(--serve-dim);
+  color: var(--serve);
+  font-weight: 700; font-size: 13.5px;
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+.reg-grp-head {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 800; font-size: 14px; color: var(--ink-dim);
+  margin-bottom: 8px;
+}
+.reg-count {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 20px; padding: 2px 9px;
+}
+.reg-chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.reg-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 20px; padding: 6px 8px 6px 13px;
+  font-weight: 700; font-size: 14px;
+}
+.reg-x {
+  border: none; background: transparent; cursor: pointer;
+  color: var(--muted); font-size: 17px; line-height: 1;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.reg-x:hover { background: rgba(255,91,91,0.18); color: var(--danger); }
+
+/* ---------- 觀眾看板（/）---------- */
+.spec-tabs { margin-bottom: 14px; }
+/* 觀眾看板的即時計分板嵌在 .setup 捲動容器中，需覆寫全螢幕版的高度設定 */
+.spectator-match { height: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.spectator-match .board { min-height: 440px; }
+.spectator-match .team-panel { pointer-events: none; cursor: default; }
+.live-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--danger); border-color: rgba(255,91,91,0.4);
+  font-weight: 800; letter-spacing: 1px;
+}
+.live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--danger);
+  animation: livePulse 1.4s ease-in-out infinite;
+}
+@keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+.spec-winner {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin: 0 auto 12px; max-width: 640px;
+  background: rgba(255,197,61,0.12); border: 1px solid var(--gold);
+  color: var(--gold); font-weight: 800; font-size: 16px;
+  border-radius: 12px; padding: 11px 16px;
+}

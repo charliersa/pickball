@@ -160,15 +160,25 @@ function DivisionView({ t, di, onStartMatch, onBuildKnockout }) {
   );
 }
 
-function TournamentScreen({ tournament, onDraw, onStartMatch, onBuildKnockout, onReset, onBack }) {
+function TournamentScreen({ tournament, registrations, onDraw, onStartMatch, onBuildKnockout, onReset, onBack }) {
   const [names, setNames] = React.useState(() => TB_LEVELS.map(() => Array.from({ length: TB_PER_DIV }, () => "")));
   const [event, setEvent] = React.useState("匹克球分級循環賽");
   const [target, setTarget] = React.useState(11);
   const [rule, setRule] = React.useState("sideout");
   const [activeDiv, setActiveDiv] = React.useState(0);
 
+  const reg = registrations || [];
+  const regByLevel = (lvl) => reg.filter((r) => r.level === lvl).map((r) => r.name);
+
   function setName(di, i, v) {
     setNames((a) => a.map((list, k) => (k === di ? list.map((x, q) => (q === i ? v : x)) : list)));
+  }
+  // 把某級的報名名單帶入該級名單欄位（最多 10 人，其餘留空）
+  function loadRoster(di, lvl) {
+    const picked = regByLevel(lvl).slice(0, TB_PER_DIV);
+    setNames((a) => a.map((list, k) => (
+      k === di ? Array.from({ length: TB_PER_DIV }, (_, i) => picked[i] || "") : list
+    )));
   }
   function draw() {
     const inputs = TB_LEVELS.map((lvl, di) => ({
@@ -215,9 +225,17 @@ function TournamentScreen({ tournament, onDraw, onStartMatch, onBuildKnockout, o
             </div>
           </div>
 
-          {TB_LEVELS.map((lvl, di) => (
+          {TB_LEVELS.map((lvl, di) => {
+            const regCount = regByLevel(lvl).length;
+            return (
             <div className="card" key={di}>
-              <h2>{lvl} 級名單（10 人）</h2>
+              <h2 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                <span>{lvl} 級名單（10 人）</span>
+                <button className="btn ghost" style={{ padding: "6px 12px", fontSize: 13 }}
+                        disabled={regCount === 0} onClick={() => loadRoster(di, lvl)}>
+                  帶入報名（{regCount}）
+                </button>
+              </h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
                 {names[di].map((n, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -227,10 +245,11 @@ function TournamentScreen({ tournament, onDraw, onStartMatch, onBuildKnockout, o
                 ))}
               </div>
             </div>
-          ))}
+            );
+          })}
 
           <p style={{ fontSize: 12.5, color: "var(--muted)", fontWeight: 600, padding: "0 4px" }}>
-            留空的會自動命名。抽籤會把每級 10 人隨機配成 5 對固定搭檔，5 對互相循環。
+            可按「帶入報名」自動填入 /register 收到的名單。留空的會自動命名。抽籤會把每級 10 人隨機配成 5 對固定搭檔，5 對互相循環。
           </p>
 
           <div className="setup-foot">

@@ -112,6 +112,7 @@ function App() {
   const [displaySwap, setDisplaySwap] = React.useState(false);
   const [records, setRecords] = React.useState(loadJSON(LS_RECORDS, []));
   const [tournament, setTournament] = React.useState(loadTournament());
+  const [registrations, setRegistrations] = React.useState([]);
   const [showHistory, setShowHistory] = React.useState(false);
   const justSaved = React.useRef(false);
   const socketRef = React.useRef(null);
@@ -139,6 +140,7 @@ function App() {
       if (newT !== undefined) setTournament(isValidTournament(newT) ? newT : null);
       if (newSt) setScreen("match");
     });
+    s.on('reg:sync', (rows) => setRegistrations(Array.isArray(rows) ? rows : []));
     return () => { s.disconnect(); socketRef.current = null; };
   }, []);
 
@@ -271,6 +273,7 @@ function App() {
       {screen === "tournament" && (
         <TournamentScreen
           tournament={tournament}
+          registrations={registrations}
           onDraw={handleDrawTournament}
           onStartMatch={startTournamentMatch}
           onBuildKnockout={handleBuildKnockout}
@@ -306,6 +309,12 @@ function App() {
   );
 }
 
+// ---- 依網址路徑決定角色 ----
+//   /register → 選手報名後台   /control → 操作者計分台   其餘 → 觀眾看板
+const _path = (location.pathname || "/").replace(/\/+$/, "") || "/";
+const ROLE = _path === "/register" ? "register" : _path === "/control" ? "control" : "spectator";
+const RootView = ROLE === "register" ? RegisterScreen : ROLE === "spectator" ? SpectatorApp : App;
+
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <ErrorBoundary><App /></ErrorBoundary>
+  <ErrorBoundary><RootView /></ErrorBoundary>
 );
