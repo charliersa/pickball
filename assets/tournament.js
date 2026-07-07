@@ -1,8 +1,8 @@
 /* ============================================================
    匹克球賽事引擎  Tournament Engine（雙級別版）
-   - 分 2.0 / 3.0 兩級別，各 10 人
-   - 每級抽籤把 10 人配成 5 對固定雙打搭檔
-   - 5 對打循環賽（每對打其他 4 對，每級 10 場，2 場地 5 輪）
+   - 分 2.0 / 3.0 兩級別，各 12 人
+   - 每級抽籤把 12 人配成 6 對固定雙打搭檔
+   - 6 對打循環賽（每對打其他 5 對，每級 15 場，排進 2 面場地 · 8 時段）
    - 積分：每對勝場優先、淨分次之
    - 淘汰賽：各級前 4 對 → 準決賽(1-4,2-3) → 決賽，各級各出一位冠軍
    純函式，無 React 依賴。所有 apply* 回傳「新的」tournament（深拷貝）。
@@ -11,8 +11,10 @@
 (function () {
   "use strict";
 
-  var PAIR_COLORS = ["#19C3FB", "#FF5B3A", "#C7F03A", "#A66BFF", "#FFC53D"];
+  var PAIR_COLORS = ["#19C3FB", "#FF5B3A", "#C7F03A", "#A66BFF", "#FFC53D", "#FF4D9D"];
   var DEFAULT_LEVELS = ["2.0", "3.0"];
+  var DEFAULT_PAIR_COUNT = 6; // 每級 12 人 → 6 對
+  var DEFAULT_COURTS = 2;     // 兩面場地
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
@@ -48,9 +50,38 @@
     return rounds;
   }
 
-  // 從 10 人抽籤配 5 對，並產生循環賽程（回傳一個 division 物件）
-  function buildDivision(di, level, names, pairCount) {
-    pairCount = pairCount || 5;
+  // 把循環賽所有對戰貪婪排進「courtCount 面場地」，回傳帶 court / slot 的賽程。
+  // 規則：依循環輪次順序，每場排進「最早可用時段」——該時段尚有空場地，
+  //       且兩對都沒有在同一時段打別場（同一時段同一對不重複）。
+  function scheduleMatches(rounds, courtCount) {
+    var pending = [];
+    rounds.forEach(function (round, r) {
+      round.forEach(function (ij) { pending.push({ i: ij[0], j: ij[1], round: r }); });
+    });
+    var slots = []; // slots[s] = { count: 已排場數, busy: { pairIdx: true } }
+    var scheduled = [];
+    pending.forEach(function (pm) {
+      var s = 0;
+      for (;;) {
+        if (!slots[s]) slots[s] = { count: 0, busy: {} };
+        var slot = slots[s];
+        if (slot.count < courtCount && !slot.busy[pm.i] && !slot.busy[pm.j]) break;
+        s++;
+      }
+      var slot = slots[s];
+      var court = slot.count;
+      slot.count++;
+      slot.busy[pm.i] = true;
+      slot.busy[pm.j] = true;
+      scheduled.push({ i: pm.i, j: pm.j, round: pm.round, court: court, slot: s });
+    });
+    return scheduled;
+  }
+
+  // 從 12 人抽籤配 6 對，並產生循環賽程（回傳一個 division 物件）
+  function buildDivision(di, level, names, pairCount, courtCount) {
+    pairCount = pairCount || DEFAULT_PAIR_COUNT;
+    courtCount = courtCount || DEFAULT_COURTS;
     var pool = shuffle((names || []).map(function (n, i) {
       return (n && String(n).trim()) || ("球員 " + (i + 1));
     }));
@@ -67,23 +98,19 @@
     }
 
     var rounds = roundRobinRounds(pairs.length);
-    var matches = [];
-    rounds.forEach(function (round, r) {
-      round.forEach(function (ij, c) {
-        var i = ij[0], j = ij[1];
-        matches.push({
-          id: "d" + di + "-r" + r + "-c" + c,
-          phase: "group",
-          division: di,
-          round: r,
-          pairIdx: [i, j],
-          teams: [pairs[i].players.slice(), pairs[j].players.slice()],
-          court: c,
-          slot: r,
-          status: "pending",
-          result: null,
-        });
-      });
+    var matches = scheduleMatches(rounds, courtCount).map(function (sm) {
+      return {
+        id: "d" + di + "-s" + sm.slot + "-c" + sm.court,
+        phase: "group",
+        division: di,
+        round: sm.round,
+        pairIdx: [sm.i, sm.j],
+        teams: [pairs[sm.i].players.slice(), pairs[sm.j].players.slice()],
+        court: sm.court,
+        slot: sm.slot,
+        status: "pending",
+        result: null,
+      };
     });
 
     return { level: level, pairs: pairs, matches: matches, ko: null };
@@ -99,7 +126,7 @@
       { level: DEFAULT_LEVELS[1], names: [] },
     ];
     var divisions = inputs.map(function (d, di) {
-      return buildDivision(di, d.level || DEFAULT_LEVELS[di] || String(di + 1), d.names, opts.pairCount);
+      return buildDivision(di, d.level || DEFAULT_LEVELS[di] || String(di + 1), d.names, opts.pairCount, opts.courts);
     });
     return {
       event: (opts.event && opts.event.trim()) || "匹克球分級循環賽",
@@ -241,5 +268,7 @@
     clone: clone,
     PAIR_COLORS: PAIR_COLORS,
     DEFAULT_LEVELS: DEFAULT_LEVELS,
+    DEFAULT_PAIR_COUNT: DEFAULT_PAIR_COUNT,
+    DEFAULT_COURTS: DEFAULT_COURTS,
   };
 })();

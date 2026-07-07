@@ -34,7 +34,7 @@ function tournamentMatchConfig(t, phase, m) {
     if (c1 === pa.color) c1 = "#FF5B3A";
     teamB = { name: pb.players.join("・"), color: c1, players: pb.players.slice() };
   }
-  const label = d.level + "級 · " + (phase === "ko" ? m.roundName : ("第" + (m.round + 1) + "輪"));
+  const label = d.level + "級 · " + (phase === "ko" ? m.roundName : ("場地" + (m.court + 1) + " · 第" + (m.slot + 1) + "輪"));
   return {
     event: t.event + " · " + label,
     mode: "doubles", target: t.target, rule: t.rule, bestOf,

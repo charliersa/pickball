@@ -97,6 +97,8 @@ function SpecMatchRow({ m, label, color }) {
 function SpecDivisionView({ t, di, view }) {
   const d = t.divisions[di];
   const courtMatches = (c) => d.matches.filter((m) => m.court === c).sort((a, b) => a.slot - b.slot);
+  const courts = Array.from(new Set(d.matches.map((m) => m.court))).sort((a, b) => a - b);
+  const roundCount = d.matches.reduce((mx, m) => Math.max(mx, m.slot), 0) + 1;
 
   if (view === "standing") {
     return <DivisionStanding t={t} di={di} />;
@@ -138,9 +140,9 @@ function SpecDivisionView({ t, di, view }) {
 
       {!d.ko && (
         <div className="card">
-          <h2>賽程表（2 場地 · 5 輪）</h2>
+          <h2>賽程表（{courts.length} 場地 · {roundCount} 輪）</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
-            {[0, 1].map((c) => (
+            {courts.map((c) => (
               <div key={c}>
                 <div style={{ fontWeight: 800, fontSize: 13, color: "var(--ink-dim)", marginBottom: 8 }}>場地 {c + 1}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -162,7 +164,7 @@ function SpecResults({ t }) {
   const rows = [];
   t.divisions.forEach((d, di) => {
     d.matches.forEach((m) => {
-      if (m.status === "done" && m.result) rows.push({ di, level: d.level, label: `第 ${m.round + 1} 輪`, m });
+      if (m.status === "done" && m.result) rows.push({ di, level: d.level, label: `場地 ${m.court + 1} · 第 ${m.slot + 1} 輪`, m });
     });
     if (d.ko) d.ko.matches.forEach((m) => {
       if (m.status === "done" && m.result) rows.push({ di, level: d.level, label: m.roundName, m });
