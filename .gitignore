@@ -4,3 +4,8 @@ node_modules/
 screenshots/
 .claude/
 registrations.json
+
+# Firebase 服務帳戶金鑰（機密，絕不入庫）
+*firebase-adminsdk*.json
+serviceAccount*.json
+*-service-account*.json
