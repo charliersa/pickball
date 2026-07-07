@@ -40,15 +40,59 @@ app.use(express.static(__dirname));
 // 伺服器記憶體中的比賽狀態（所有裝置的唯一真相來源）
 let sharedState = null;
 
-// ---- 選手報名名單（持久化到 registrations.json，重啟不遺失）----
+// ---- 選手報名名單持久化 ----
+// 優先寫入 Firebase 即時資料庫（重啟／重新部署都不遺失）；
+// 未設定 Firebase 環境變數時，退回本地 registrations.json（本機開發用）。
+//   需要的環境變數：
+//     FIREBASE_SERVICE_ACCOUNT  服務帳戶金鑰 JSON（整包字串）
+//     FIREBASE_DATABASE_URL     RTDB 網址，例如 https://xxx-default-rtdb.firebaseio.com
 const REG_FILE = path.join(__dirname, 'registrations.json');
 let registrations = [];
-try {
-  registrations = JSON.parse(fs.readFileSync(REG_FILE, 'utf8'));
-  if (!Array.isArray(registrations)) registrations = [];
-} catch (e) { registrations = []; }
+let regRef = null; // Firebase RTDB ref（null = 本地檔案模式）
+
+function readSeedFile() {
+  try {
+    const arr = JSON.parse(fs.readFileSync(REG_FILE, 'utf8'));
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+async function initRegStore() {
+  const svc = process.env.FIREBASE_SERVICE_ACCOUNT;
+  const dbUrl = process.env.FIREBASE_DATABASE_URL;
+  if (svc && dbUrl) {
+    try {
+      const { initializeApp, cert } = require('firebase-admin/app');
+      const { getDatabase } = require('firebase-admin/database');
+      const creds = JSON.parse(svc);
+      const fbApp = initializeApp({ credential: cert(creds), databaseURL: dbUrl });
+      regRef = getDatabase(fbApp).ref('registrations');
+      const snap = await regRef.once('value');
+      const val = snap.val();
+      registrations = Array.isArray(val) ? val.filter(Boolean)
+                    : (val ? Object.values(val) : []);
+      // 雲端尚無資料，但本地有種子名單 → 帶入一次（例如首次上線的預載名單）
+      if (registrations.length === 0) {
+        const seed = readSeedFile();
+        if (seed.length) { registrations = seed; await regRef.set(registrations); }
+      }
+      console.log(`[reg] Firebase 已連線，載入 ${registrations.length} 筆報名`);
+      return;
+    } catch (e) {
+      console.error('[reg] Firebase 初始化失敗，改用本地檔案：', e.message);
+      regRef = null;
+    }
+  }
+  registrations = readSeedFile();
+  console.log(`[reg] 本地檔案模式，載入 ${registrations.length} 筆報名`);
+}
+
 function saveReg() {
-  try { fs.writeFileSync(REG_FILE, JSON.stringify(registrations, null, 2)); } catch (e) {}
+  if (regRef) {
+    regRef.set(registrations).catch((e) => console.error('[reg] Firebase 寫入失敗：', e.message));
+  } else {
+    try { fs.writeFileSync(REG_FILE, JSON.stringify(registrations, null, 2)); } catch (e) {}
+  }
 }
 function newRegId() {
   return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -93,10 +137,12 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  const base = `http://localhost:${PORT}`;
-  console.log(`計分伺服器已啟動：`);
-  console.log(`  觀眾看板  ${base}/`);
-  console.log(`  計分操作  ${base}/control`);
-  console.log(`  選手報名  ${base}/register`);
+initRegStore().finally(() => {
+  server.listen(PORT, () => {
+    const base = `http://localhost:${PORT}`;
+    console.log(`計分伺服器已啟動：`);
+    console.log(`  觀眾看板  ${base}/`);
+    console.log(`  計分操作  ${base}/control`);
+    console.log(`  選手報名  ${base}/register`);
+  });
 });
