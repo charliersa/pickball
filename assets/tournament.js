@@ -50,30 +50,107 @@
     return rounds;
   }
 
-  // 把循環賽所有對戰貪婪排進「courtCount 面場地」，回傳帶 court / slot 的賽程。
-  // 規則：依循環輪次順序，每場排進「最早可用時段」——該時段尚有空場地，
-  //       且兩對都沒有在同一時段打別場（同一時段同一對不重複）。
-  function scheduleMatches(rounds, courtCount) {
-    var pending = [];
-    rounds.forEach(function (round, r) {
-      round.forEach(function (ij) { pending.push({ i: ij[0], j: ij[1], round: r }); });
-    });
-    var slots = []; // slots[s] = { count: 已排場數, busy: { pairIdx: true } }
-    var scheduled = [];
-    pending.forEach(function (pm) {
-      var s = 0;
-      for (;;) {
-        if (!slots[s]) slots[s] = { count: 0, busy: {} };
-        var slot = slots[s];
-        if (slot.count < courtCount && !slot.busy[pm.i] && !slot.busy[pm.j]) break;
-        s++;
+  // ---- 排程成本：讓每對「平均交叉、不要連打好幾場」----
+  // 主目標：最小化任一對的「最長連續上場輪數」；其次：連打總數、空檔落在最後一輪。
+  function scheduleCost(sched, n) {
+    var perPair = [];
+    for (var p = 0; p < n; p++) perPair.push([]);
+    sched.forEach(function (m) { perPair[m.i].push(m.slot); perPair[m.j].push(m.slot); });
+    var totalB2B = 0, worstRun = 1, runPenalty = 0;
+    for (var p2 = 0; p2 < n; p2++) {
+      var seq = perPair[p2].sort(function (a, b) { return a - b; });
+      var run = 1;
+      for (var q = 1; q < seq.length; q++) {
+        if (seq[q] - seq[q - 1] === 1) { totalB2B++; run++; if (run > worstRun) worstRun = run; runPenalty += run; }
+        else run = 1;
       }
-      var slot = slots[s];
-      var court = slot.count;
-      slot.count++;
-      slot.busy[pm.i] = true;
-      slot.busy[pm.j] = true;
-      scheduled.push({ i: pm.i, j: pm.j, round: pm.round, court: court, slot: s });
+    }
+    var maxSlot = 0, cnt = {};
+    sched.forEach(function (m) { cnt[m.slot] = (cnt[m.slot] || 0) + 1; if (m.slot > maxSlot) maxSlot = m.slot; });
+    var slots = maxSlot + 1, maxPerSlot = 0;
+    for (var ss in cnt) maxPerSlot = Math.max(maxPerSlot, cnt[ss]);
+    var gapPenalty = 0; // 未滿場的時段若不在最後一輪 → 場地輪次會跳號
+    for (var s2 = 0; s2 < slots - 1; s2++) if ((cnt[s2] || 0) < maxPerSlot) gapPenalty++;
+    return worstRun * 1000000 + runPenalty * 10000 + gapPenalty * 1000 + totalB2B * 10 + slots;
+  }
+
+  // 隨機把 matches 打包進「剛好 ceil(場數/場地)」個時段（每時段 <=courtCount 且對手不重複）。
+  // 只接受「未滿場的空檔落在最後一輪」的打包，否則回傳 null 重試。
+  function packRandom(matches, courtCount) {
+    var order = matches.slice();
+    for (var i = order.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = order[i]; order[i] = order[j]; order[j] = t; }
+    var minSlots = Math.ceil(matches.length / courtCount);
+    var slots = [];
+    for (var s = 0; s < minSlots; s++) slots.push({ ms: [], used: {} });
+    for (var k = 0; k < order.length; k++) {
+      var pm = order[k], cand = [];
+      for (var s2 = 0; s2 < slots.length; s2++) {
+        var sl = slots[s2];
+        if (sl.ms.length < courtCount && !sl.used[pm.i] && !sl.used[pm.j]) cand.push(s2);
+      }
+      if (cand.length === 0) return null;
+      var pick = cand[Math.floor(Math.random() * cand.length)];
+      slots[pick].used[pm.i] = true; slots[pick].used[pm.j] = true; slots[pick].ms.push(pm);
+    }
+    for (var s3 = 0; s3 < slots.length - 1; s3++) if (slots[s3].ms.length < courtCount) return null;
+    var out = [];
+    slots.forEach(function (slt, s4) {
+      slt.ms.forEach(function (pm2, c) { out.push({ i: pm2.i, j: pm2.j, round: pm2.round, court: c, slot: s4 }); });
+    });
+    return out;
+  }
+
+  // 局部搜尋：隨機交換兩場的時段/場地（不製造同時段重複對手、不降級才保留）。
+  function hillClimb(sched, n, courtCount, tries) {
+    function slotPairsExcept(slot, exceptIdx) {
+      var used = {};
+      for (var k = 0; k < sched.length; k++) {
+        if (k === exceptIdx) continue;
+        if (sched[k].slot === slot) { used[sched[k].i] = true; used[sched[k].j] = true; }
+      }
+      return used;
+    }
+    var cur = scheduleCost(sched, n);
+    for (var t = 0; t < tries; t++) {
+      var a = Math.floor(Math.random() * sched.length), b = Math.floor(Math.random() * sched.length);
+      if (a === b || sched[a].slot === sched[b].slot) continue;
+      var ua = slotPairsExcept(sched[a].slot, a);
+      if (ua[sched[b].i] || ua[sched[b].j]) continue;
+      var ub = slotPairsExcept(sched[b].slot, b);
+      if (ub[sched[a].i] || ub[sched[a].j]) continue;
+      var sa = sched[a].slot, ca = sched[a].court, sb = sched[b].slot, cb = sched[b].court;
+      sched[a].slot = sb; sched[a].court = cb; sched[b].slot = sa; sched[b].court = ca;
+      var c = scheduleCost(sched, n);
+      if (c <= cur) cur = c;
+      else { sched[a].slot = sa; sched[a].court = ca; sched[b].slot = sb; sched[b].court = cb; }
+    }
+    return sched;
+  }
+
+  // 把循環賽所有對戰排進「courtCount 面場地」，讓每對平均交叉上場、避免連打好幾場。
+  // 做法：多起點隨機打包 + 局部搜尋，取「最長連續上場」最少的賽程。
+  function scheduleMatches(rounds, courtCount) {
+    var matches = [], n = 0;
+    rounds.forEach(function (round, r) {
+      round.forEach(function (ij) { matches.push({ i: ij[0], j: ij[1], round: r }); n = Math.max(n, ij[0] + 1, ij[1] + 1); });
+    });
+    var best = null, bestC = Infinity;
+    for (var restart = 0; restart < 30; restart++) {
+      var s = null;
+      for (var it = 0; it < 350 && !s; it++) s = packRandom(matches, courtCount);
+      if (!s) continue;
+      s = hillClimb(s, n, courtCount, 600);
+      var c = scheduleCost(s, n);
+      if (c < bestC) { bestC = c; best = s; }
+    }
+    if (best) return best;
+    // 保底：極端設定下若找不到合法打包，退回單純貪婪最早時段
+    var slots = [], scheduled = [];
+    matches.forEach(function (pm) {
+      var s2 = 0;
+      for (;;) { if (!slots[s2]) slots[s2] = { count: 0, busy: {} }; if (slots[s2].count < courtCount && !slots[s2].busy[pm.i] && !slots[s2].busy[pm.j]) break; s2++; }
+      scheduled.push({ i: pm.i, j: pm.j, round: pm.round, court: slots[s2].count, slot: s2 });
+      slots[s2].count++; slots[s2].busy[pm.i] = true; slots[s2].busy[pm.j] = true;
     });
     return scheduled;
   }

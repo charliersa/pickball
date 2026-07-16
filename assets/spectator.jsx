@@ -68,7 +68,7 @@ function SpectatorBoard({ st }) {
 }
 
 // 唯讀對戰列（無「開始計分」按鈕）
-function SpecMatchRow({ m, label, color }) {
+function SpecMatchRow({ m, label, color, dupr }) {
   const done = m.status === "done";
   const winner = done && m.result ? m.result.winner : null;
   const score = done && m.result ? `${m.result.gamesWon[0]}:${m.result.gamesWon[1]}` : "vs";
@@ -81,9 +81,9 @@ function SpecMatchRow({ m, label, color }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         {label && <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700, marginBottom: 4 }}>{label}</div>}
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
-          <span style={{ fontWeight: winner === 0 ? 800 : 600, color: winner === 0 ? "var(--gold)" : "var(--ink)" }}>{specTeamNames(m.teams[0])}</span>
+          <TeamLabel team={m.teams[0]} win={winner === 0} dupr={dupr} />
           <span style={{ color: "var(--muted)", fontWeight: 700, fontSize: 12 }}>{score}</span>
-          <span style={{ fontWeight: winner === 1 ? 800 : 600, color: winner === 1 ? "var(--gold)" : "var(--ink)" }}>{specTeamNames(m.teams[1])}</span>
+          <TeamLabel team={m.teams[1]} win={winner === 1} dupr={dupr} />
         </div>
       </div>
       <span style={{ fontSize: 12, fontWeight: 700, color: done ? "var(--serve)" : bothReady ? "var(--ink-dim)" : "var(--muted)" }}>
@@ -94,7 +94,7 @@ function SpecMatchRow({ m, label, color }) {
 }
 
 // 唯讀分級檢視：view='standing' 只顯示積分榜；view='bracket' 顯示配對 + 賽程/淘汰賽
-function SpecDivisionView({ t, di, view }) {
+function SpecDivisionView({ t, di, view, dupr }) {
   const d = t.divisions[di];
   const courtMatches = (c) => d.matches.filter((m) => m.court === c).sort((a, b) => a.slot - b.slot);
   const courts = Array.from(new Set(d.matches.map((m) => m.court))).sort((a, b) => a - b);
@@ -112,8 +112,15 @@ function SpecDivisionView({ t, di, view }) {
           {d.pairs.map((p) => (
             <div key={p.idx} style={{ border: "1px solid var(--line)", borderTop: `3px solid ${p.color}`, borderRadius: 10, padding: "10px 12px" }}>
               <div style={{ fontWeight: 800, marginBottom: 4, color: p.color }}>{p.tag}</div>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>{p.players[0]}</div>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>{p.players[1]}</div>
+              {p.players.map((nm, k) => {
+                const id = dupr ? dupr(nm) : "";
+                return (
+                  <div key={k} style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2, marginTop: k > 0 ? 6 : 0 }}>
+                    <div>{nm}</div>
+                    {id && <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", fontFamily: "var(--font-num)" }}>{id}</div>}
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
@@ -132,7 +139,7 @@ function SpecDivisionView({ t, di, view }) {
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {d.ko.matches.map((m) => (
-              <SpecMatchRow key={m.id} m={m} label={`${m.roundName} · 場地 ${m.court + 1}`} color="var(--gold)" />
+              <SpecMatchRow key={m.id} m={m} label={`${m.roundName} · 場地 ${m.court + 1}`} color="var(--gold)" dupr={dupr} />
             ))}
           </div>
         </div>
@@ -147,7 +154,7 @@ function SpecDivisionView({ t, di, view }) {
                 <div style={{ fontWeight: 800, fontSize: 13, color: "var(--ink-dim)", marginBottom: 8 }}>場地 {c + 1}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {courtMatches(c).map((m) => (
-                    <SpecMatchRow key={m.id} m={m} label={`第 ${m.slot + 1} 輪`} color={d.pairs[m.pairIdx[0]].color} />
+                    <SpecMatchRow key={m.id} m={m} label={`第 ${m.slot + 1} 輪`} color={d.pairs[m.pairIdx[0]].color} dupr={dupr} />
                   ))}
                 </div>
               </div>
@@ -207,6 +214,7 @@ function SpecResults({ t }) {
 function SpectatorApp() {
   const [st, setSt] = React.useState(null);
   const [tournament, setTournament] = React.useState(null);
+  const [registrations, setRegistrations] = React.useState([]);
   const [tab, setTab] = React.useState("live");
   const [di, setDi] = React.useState(0);
 
@@ -217,8 +225,14 @@ function SpectatorApp() {
       setSt(newSt ?? null);
       if (newT !== undefined) setTournament(isValidTournament(newT) ? newT : null);
     });
+    s.on("reg:sync", (rows) => setRegistrations(Array.isArray(rows) ? rows : []));
     return () => { s.disconnect(); };
   }, []);
+
+  // 姓名 → DUPR ID 對照（讓對戰表／配對顯示 DUPR ID）
+  const duprByName = {};
+  registrations.forEach((r) => { if (r.name) duprByName[r.name] = r.duprId || ""; });
+  const duprId = (nm) => duprByName[String(nm || "").trim()] || "";
 
   const hasLive = !!st;
   // 有新的即時比賽時自動切到「即時比分」
@@ -278,7 +292,7 @@ function SpectatorApp() {
         )}
 
         {tab === "bracket" && (
-          hasT ? <SpecDivisionView t={tournament} di={divIdx} view="bracket" />
+          hasT ? <SpecDivisionView t={tournament} di={divIdx} view="bracket" dupr={duprId} />
                : <div className="card"><div className="hist-empty">尚未建立賽事<br />主辦方抽籤分組後會顯示對戰表</div></div>
         )}
 

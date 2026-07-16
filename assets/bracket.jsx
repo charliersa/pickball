@@ -6,18 +6,27 @@
 const TB_LEVELS = ["2.0", "3.0"];
 const TB_PER_DIV = 12;
 
-function TeamLabel({ team, win }) {
+// 隊伍顯示：每位球員一欄「名字在上、DUPR ID 在下」，球員由左到右排列
+function TeamLabel({ team, win, dupr }) {
   if (!team) return <span style={{ color: "var(--muted)" }}>—</span>;
   const names = Array.isArray(team) ? team : team.players;
   return (
-    <span style={{ fontWeight: win ? 800 : 600, color: win ? "var(--gold)" : "var(--ink)" }}>
-      {names.join("・")}
-      {win && <Icon name="trophy" style={{ display: "inline", width: 14, height: 14, verticalAlign: "-2px", marginLeft: 5 }} />}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 10, fontWeight: win ? 800 : 600, color: win ? "var(--gold)" : "var(--ink)" }}>
+      {names.map((nm, i) => {
+        const id = dupr ? dupr(nm) : "";
+        return (
+          <span key={i} style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.2 }}>
+            <span>{nm}</span>
+            {id && <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", fontFamily: "var(--font-num)" }}>{id}</span>}
+          </span>
+        );
+      })}
+      {win && <Icon name="trophy" style={{ display: "inline", width: 14, height: 14, marginLeft: 1 }} />}
     </span>
   );
 }
 
-function MatchRow({ m, label, color, onStart }) {
+function MatchRow({ m, label, color, onStart, dupr }) {
   const done = m.status === "done";
   const ready = m.teams[0] && m.teams[1] && !done;
   const winner = done && m.result ? m.result.winner : null;
@@ -29,11 +38,11 @@ function MatchRow({ m, label, color, onStart }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         {label && <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700, marginBottom: 4 }}>{label}</div>}
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
-          <TeamLabel team={m.teams[0]} win={winner === 0} />
+          <TeamLabel team={m.teams[0]} win={winner === 0} dupr={dupr} />
           <span style={{ color: "var(--muted)", fontWeight: 700, fontSize: 12 }}>
             {done && m.result ? `${m.result.gamesWon[0]}:${m.result.gamesWon[1]}` : "vs"}
           </span>
-          <TeamLabel team={m.teams[1]} win={winner === 1} />
+          <TeamLabel team={m.teams[1]} win={winner === 1} dupr={dupr} />
         </div>
       </div>
       {done ? (
@@ -85,7 +94,7 @@ function DivisionStanding({ t, di }) {
   );
 }
 
-function DivisionView({ t, di, onStartMatch, onBuildKnockout }) {
+function DivisionView({ t, di, onStartMatch, onBuildKnockout, dupr }) {
   const d = t.divisions[di];
   const done = TB.divisionComplete(t, di);
   const courtMatches = (c) => d.matches.filter((m) => m.court === c).sort((a, b) => a.slot - b.slot);
@@ -102,8 +111,15 @@ function DivisionView({ t, di, onStartMatch, onBuildKnockout }) {
           {d.pairs.map((p) => (
             <div key={p.idx} style={{ border: "1px solid var(--line)", borderTop: `3px solid ${p.color}`, borderRadius: 10, padding: "10px 12px" }}>
               <div style={{ fontWeight: 800, marginBottom: 4, color: p.color }}>{p.tag}</div>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>{p.players[0]}</div>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>{p.players[1]}</div>
+              {p.players.map((nm, k) => {
+                const id = dupr ? dupr(nm) : "";
+                return (
+                  <div key={k} style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2, marginTop: k > 0 ? 6 : 0 }}>
+                    <div>{nm}</div>
+                    {id && <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", fontFamily: "var(--font-num)" }}>{id}</div>}
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
@@ -124,7 +140,7 @@ function DivisionView({ t, di, onStartMatch, onBuildKnockout }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {d.ko.matches.map((m) => (
               <MatchRow key={m.id} m={m} label={`${m.roundName} · 場地 ${m.court + 1}`} color="var(--gold)"
-                onStart={() => onStartMatch(di, "ko", m.id)} />
+                dupr={dupr} onStart={() => onStartMatch(di, "ko", m.id)} />
             ))}
           </div>
         </div>
@@ -141,7 +157,7 @@ function DivisionView({ t, di, onStartMatch, onBuildKnockout }) {
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {courtMatches(c).map((m) => (
                     <MatchRow key={m.id} m={m} label={`第 ${m.slot + 1} 輪`}
-                      color={d.pairs[m.pairIdx[0]].color} onStart={() => onStartMatch(di, "group", m.id)} />
+                      color={d.pairs[m.pairIdx[0]].color} dupr={dupr} onStart={() => onStartMatch(di, "group", m.id)} />
                   ))}
                 </div>
               </div>
@@ -166,12 +182,16 @@ function DivisionView({ t, di, onStartMatch, onBuildKnockout }) {
 function TournamentScreen({ tournament, registrations, onDraw, onStartMatch, onBuildKnockout, onReset, onBack }) {
   const [names, setNames] = React.useState(() => TB_LEVELS.map(() => Array.from({ length: TB_PER_DIV }, () => "")));
   const [event, setEvent] = React.useState("玩轉基地729 DUPR雙打循環賽");
-  const [target, setTarget] = React.useState(11);
-  const [rule, setRule] = React.useState("sideout");
+  const [target, setTarget] = React.useState(15);
+  const [rule, setRule] = React.useState("rally");
   const [activeDiv, setActiveDiv] = React.useState(0);
 
   const reg = registrations || [];
   const regByLevel = (lvl) => reg.filter((r) => r.level === lvl).map((r) => r.name);
+  // 姓名 → DUPR 資料對照（供抽籤名單輸入時即時顯示 DUPR ID）
+  const duprByName = {};
+  reg.forEach((r) => { if (r.name) duprByName[r.name] = { id: r.duprId || "", name: r.duprName || "" }; });
+  const duprId = (nm) => (duprByName[String(nm || "").trim()] || {}).id || "";
 
   function setName(di, i, v) {
     setNames((a) => a.map((list, k) => (k === di ? list.map((x, q) => (q === i ? v : x)) : list)));
@@ -239,13 +259,25 @@ function TournamentScreen({ tournament, registrations, onDraw, onStartMatch, onB
                   帶入報名（{regCount}）
                 </button>
               </h2>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
-                {names[di].map((n, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700, width: 20, textAlign: "right", fontFamily: "var(--font-num)" }}>{i + 1}</span>
-                    <input className="input" style={{ marginBottom: 0 }} value={n} onChange={(e) => setName(di, i, e.target.value)} placeholder={`${lvl}-${i + 1}`} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
+                {names[di].map((n, i) => {
+                  const dupr = duprByName[n.trim()];
+                  return (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700, width: 20, textAlign: "right", fontFamily: "var(--font-num)" }}>{i + 1}</span>
+                      <input className="input" style={{ marginBottom: 0 }} value={n} onChange={(e) => setName(di, i, e.target.value)} placeholder={`${lvl}-${i + 1}`} />
+                    </div>
+                    {dupr && (
+                      <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700, paddingLeft: 26, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+                            title={dupr.name ? `${dupr.name} · ${dupr.id}` : dupr.id}>
+                        <span style={{ fontFamily: "var(--font-num)", color: "var(--serve)" }}>{dupr.id || "—"}</span>
+                        {dupr.name ? ` · ${dupr.name}` : ""}
+                      </span>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
             );
@@ -288,7 +320,7 @@ function TournamentScreen({ tournament, registrations, onDraw, onStartMatch, onB
           ))}
         </div>
 
-        <DivisionView t={t} di={di} onStartMatch={onStartMatch} onBuildKnockout={onBuildKnockout} />
+        <DivisionView t={t} di={di} onStartMatch={onStartMatch} onBuildKnockout={onBuildKnockout} dupr={duprId} />
 
         <div className="setup-foot">
           <button className="btn ghost" onClick={onBack}>← 返回</button>

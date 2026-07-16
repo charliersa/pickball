@@ -6,8 +6,8 @@ const COLOR_OPTS = ["#19C3FB", "#FF5B3A", "#C7F03A", "#A66BFF", "#FF4D9D", "#2BD
 function SetupScreen({ onStart, initial, resumable, onResume, onTournament }) {
   const [event, setEvent] = React.useState(initial?.event ?? "匹克球友誼賽");
   const [mode, setMode] = React.useState(initial?.mode ?? "doubles");
-  const [target, setTarget] = React.useState(initial?.target ?? 11);
-  const [rule, setRule] = React.useState(initial?.rule ?? "sideout");
+  const [target, setTarget] = React.useState(initial?.target ?? 15);
+  const [rule, setRule] = React.useState(initial?.rule ?? "rally");
   const [firstServe, setFirstServe] = React.useState(initial?.firstServe ?? 0);
   const [teams, setTeams] = React.useState(initial?.teams ?? [
     { name: "藍隊", color: "#19C3FB", players: ["球員 A1", "球員 A2"] },
@@ -73,7 +73,7 @@ function SetupScreen({ onStart, initial, resumable, onResume, onTournament }) {
             <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 9, fontWeight: 600, lineHeight: 1.5 }}>
               {rule === "sideout"
                 ? "傳統制：僅發球方得分；雙打有第 1／第 2 發球員，唱分為「發-接-發球員」。"
-                : "Rally 制：每球皆得分，輸球方換發；勝負需領先 2 分。"}
+                : `Rally 制：每球皆得分，輸球方換發；需領先 2 分，${target - 1}:${target - 1} 後先得 ${target} 分即勝。`}
             </p>
           </div>
         </div>

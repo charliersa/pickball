@@ -3,144 +3,192 @@
     "id": "rmrafxta3000",
     "name": "陳怡仁",
     "level": "2.0",
+    "duprName": "YIJENCHEN",
+    "duprId": "V6O0DJ",
     "when": "2026-07-07T09:22:46.779Z"
   },
   {
     "id": "rmrafxta4001",
     "name": "吳佩玲",
     "level": "2.0",
+    "duprName": "PEILINGWU",
+    "duprId": "P4KVOQ",
     "when": "2026-07-07T09:22:47.779Z"
   },
   {
     "id": "rmrafxta5002",
     "name": "Iris",
     "level": "2.0",
+    "duprName": "Iris Tsai",
+    "duprId": "RDNP7D",
     "when": "2026-07-07T09:22:48.779Z"
   },
   {
     "id": "rmrafxta6003",
     "name": "江庭育",
     "level": "2.0",
+    "duprName": "TingYu Jiang",
+    "duprId": "K5LQDQ",
     "when": "2026-07-07T09:22:49.779Z"
   },
   {
     "id": "rmrafxta7004",
     "name": "俞均",
     "level": "2.0",
+    "duprName": "俞均陳",
+    "duprId": "KYNXX6",
     "when": "2026-07-07T09:22:50.779Z"
   },
   {
     "id": "rmrafxta8005",
     "name": "祈龍",
     "level": "2.0",
+    "duprName": "Huangchilung",
+    "duprId": "Q9GMDN",
     "when": "2026-07-07T09:22:51.779Z"
   },
   {
     "id": "rmrafxta9006",
     "name": "victor",
     "level": "2.0",
+    "duprName": "VICTOR Lee",
+    "duprId": "PP9M0Q",
     "when": "2026-07-07T09:22:52.779Z"
   },
   {
     "id": "rmrafxtaa007",
     "name": "玉玫",
     "level": "2.0",
+    "duprName": "Annie Chen",
+    "duprId": "EVL7ME",
     "when": "2026-07-07T09:22:53.779Z"
   },
   {
     "id": "rmrafxtab008",
     "name": "珮怡",
     "level": "2.0",
+    "duprName": "Peggy Huang",
+    "duprId": "0XZVOG",
     "when": "2026-07-07T09:22:54.779Z"
+  },
+  {
+    "id": "rmrafxtab208",
+    "name": "賢益",
+    "level": "2.0",
+    "duprName": "Fami Wu",
+    "duprId": "WZNPVL",
+    "when": "2026-07-07T09:22:54.979Z"
   },
   {
     "id": "rmrafxtac009",
     "name": "憶吟",
     "level": "2.0",
+    "duprName": "I Yin liu",
+    "duprId": "OR990P",
     "when": "2026-07-07T09:22:55.779Z"
   },
   {
     "id": "rmrafxtad00a",
     "name": "小跳",
     "level": "2.0",
+    "duprName": "Nathan Hong",
+    "duprId": "6PJNDQ",
     "when": "2026-07-07T09:22:56.779Z"
-  },
-  {
-    "id": "rmrafxtae00b",
-    "name": "0",
-    "level": "2.0",
-    "when": "2026-07-07T09:22:57.779Z"
   },
   {
     "id": "rmrafxtaf00c",
     "name": "韓璨宇",
     "level": "3.0",
+    "duprName": "Tsan Yu Han",
+    "duprId": "XORMK2",
     "when": "2026-07-07T09:22:58.779Z"
   },
   {
     "id": "rmrafxtag00d",
     "name": "濮茶米",
     "level": "3.0",
+    "duprName": "Pu Dawei",
+    "duprId": "X0R0Q5",
     "when": "2026-07-07T09:22:59.779Z"
   },
   {
     "id": "rmrafxtah00e",
     "name": "杜赫倫",
     "level": "3.0",
+    "duprName": "helun Du",
+    "duprId": "4Q962V",
     "when": "2026-07-07T09:23:00.779Z"
   },
   {
     "id": "rmrafxtai00f",
     "name": "張1",
     "level": "3.0",
+    "duprName": "Kao KaiLung",
+    "duprId": "PPYMXM",
     "when": "2026-07-07T09:23:01.779Z"
   },
   {
     "id": "rmrafxtaj00g",
     "name": "粲暘",
     "level": "3.0",
+    "duprName": "ye can yang",
+    "duprId": "k5w6rk",
     "when": "2026-07-07T09:23:02.779Z"
   },
   {
     "id": "rmrafxtak00h",
     "name": "其誠",
     "level": "3.0",
+    "duprName": "chi Chen Tsai",
+    "duprId": "4PKR52",
     "when": "2026-07-07T09:23:03.779Z"
   },
   {
     "id": "rmrafxtal00i",
     "name": "Dino",
     "level": "3.0",
+    "duprName": "Dino Hu",
+    "duprId": "9DDZEK",
     "when": "2026-07-07T09:23:04.779Z"
   },
   {
     "id": "rmrafxtam00j",
     "name": "吳軒皓",
     "level": "3.0",
+    "duprName": "wu hsuanhao",
+    "duprId": "QNJZMR",
     "when": "2026-07-07T09:23:05.779Z"
   },
   {
     "id": "rmrafxtan00k",
     "name": "阿彤",
     "level": "3.0",
+    "duprName": "劉阿彤",
+    "duprId": "9DLMNJ",
     "when": "2026-07-07T09:23:06.779Z"
   },
   {
     "id": "rmrafxtao00l",
     "name": "EthanHuang",
     "level": "3.0",
+    "duprName": "",
+    "duprId": "OW4XDL",
     "when": "2026-07-07T09:23:07.779Z"
   },
   {
     "id": "rmrafxtap00m",
     "name": "東華",
     "level": "3.0",
+    "duprName": "",
+    "duprId": "6P9OLD",
     "when": "2026-07-07T09:23:08.779Z"
   },
   {
     "id": "rmrafxtaq00n",
     "name": "Hester Han",
     "level": "3.0",
+    "duprName": "",
+    "duprId": "M9Z0JO",
     "when": "2026-07-07T09:23:09.779Z"
   }
 ]

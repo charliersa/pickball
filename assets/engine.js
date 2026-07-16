@@ -2,7 +2,7 @@
    匹克球計分引擎  Pickleball Scoring Engine
    - 單打 / 雙打
    - 發球得分制 (side-out)  /  Rally 制 (每球得分)
-   - 11 / 15 分，need win by 2
+   - 11 / 15 分，need win by 2（(target-1) 平手後取消 2 分差，先達 target 即勝）
    - 三局兩勝 (Best of 3)
    純函式，無 React 依賴。所有 apply* 回傳「新的」state（深拷貝）。
    ============================================================ */
@@ -41,9 +41,12 @@
   }
 
   function isGameWon(st, team) {
+    var t = st.config.target;
     var s = st.scores[team];
     var o = st.scores[1 - team];
-    return s >= st.config.target && s - o >= 2;
+    // 14:14（target-1 平手）取消 2 分差，先達 target 者即勝（sudden death）
+    if (s >= t && o >= t - 1) return s > o;
+    return s >= t && s - o >= 2;
   }
 
   // 交換場邊判定：每局開始交換；決勝局過半再交換一次
@@ -88,8 +91,11 @@
     if (isNaN(a) || isNaN(b) || a < 0 || b < 0) return { st: prev, ok: false, reason: "請輸入有效分數" };
     if (a === b) return { st: prev, ok: false, reason: "兩隊分數不能相同" };
     var hi = Math.max(a, b), lo = Math.min(a, b);
-    if (hi < prev.config.target) return { st: prev, ok: false, reason: "勝方需達 " + prev.config.target + " 分" };
-    if (hi - lo < 2) return { st: prev, ok: false, reason: "需領先 2 分" };
+    var target = prev.config.target;
+    if (hi < target) return { st: prev, ok: false, reason: "勝方需達 " + target + " 分" };
+    // 14:14 後先得 15 分即勝（sudden death）；其餘情況仍需領先 2 分
+    var suddenDeath = hi === target && lo === target - 1;
+    if (hi - lo < 2 && !suddenDeath) return { st: prev, ok: false, reason: "需領先 2 分（" + (target - 1) + ":" + (target - 1) + " 後 " + target + " 分即勝）" };
     var st = clone(prev);
     st.switchEnds = false;
     st.scores = [a, b];
@@ -182,9 +188,10 @@
     var res = [false, false];
     for (var team = 0; team < 2; team++) {
       var s = st.scores[team], o = st.scores[1 - team];
-      // 再得一分即達標且領先2
+      // 再得一分即達標：領先 2 分，或 14:14 後 sudden death（先達 target 即勝）
       var after = s + 1;
-      if (after >= t && after - o >= 2) {
+      var win = after >= t && (after - o >= 2 || o >= t - 1);
+      if (win) {
         if (st.config.rule === "rally" || team === st.serveTeam) res[team] = true;
       }
     }

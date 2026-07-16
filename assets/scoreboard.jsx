@@ -138,7 +138,8 @@ function ScoreInputPanel({ st, onGameScore }) {
     if (na === nb) { setErr("兩隊分數不能相同"); return; }
     const hi = Math.max(na, nb), lo = Math.min(na, nb);
     if (hi < target) { setErr(`勝方需達 ${target} 分`); return; }
-    if (hi - lo < 2) { setErr("需領先 2 分"); return; }
+    const suddenDeath = hi === target && lo === target - 1;
+    if (hi - lo < 2 && !suddenDeath) { setErr(`需領先 2 分（${target - 1}:${target - 1} 後 ${target} 分即勝）`); return; }
     setErr("");
     onGameScore(na, nb);
     setA(""); setB("");
@@ -166,7 +167,7 @@ function ScoreInputPanel({ st, onGameScore }) {
       <div className="card" style={{ maxWidth: 460, margin: "0 auto" }}>
         <h2 style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span>第 {st.gameIndex + 1} 局 · 輸入最終比分</span>
-          <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600 }}>{target} 分 · 領先 2 分</span>
+          <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600 }}>{target} 分 · {target - 1}:{target - 1} 後即勝</span>
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 6 }}>
           {teamRow(teamA, a, setA, teamA.color)}
