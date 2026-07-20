@@ -579,20 +579,52 @@ html, body {
   background: var(--panel-2); border: 1px solid var(--line);
   border-radius: 20px; padding: 2px 9px;
 }
-.reg-chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
-.reg-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--panel-2); border: 1px solid var(--line);
-  border-radius: 20px; padding: 6px 8px 6px 13px;
-  font-weight: 700; font-size: 14px;
+.reg-opt {
+  margin-left: 6px; font-size: 10.5px; font-weight: 700;
+  color: var(--muted); letter-spacing: 0;
 }
-.reg-x {
+.reg-id-input { font-family: var(--font-num); letter-spacing: 0.06em; }
+
+/* 名單列：編號 · 姓名 · DUPR 帳號名 · DUPR ID · 動作 */
+.reg-list { display: flex; flex-direction: column; gap: 6px; }
+.reg-row {
+  display: grid;
+  grid-template-columns: 24px minmax(70px, 1fr) minmax(80px, 1.3fr) 84px 26px 26px;
+  align-items: center; gap: 8px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 7px 9px;
+  font-size: 13.5px;
+}
+.reg-row.editing { grid-template-columns: 24px 1fr 26px 26px; }
+.reg-edit-fields { display: grid; grid-template-columns: 1fr 1fr 90px; gap: 6px; }
+.reg-edit-fields .input { margin-bottom: 0; padding: 6px 9px; font-size: 13px; }
+.reg-no {
+  font-family: var(--font-num); font-size: 11px; font-weight: 700;
+  color: var(--muted); text-align: right;
+}
+.reg-nm { font-weight: 800; }
+.reg-dn {
+  font-size: 12px; font-weight: 600; color: var(--ink-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.reg-did {
+  font-family: var(--font-num); font-size: 12.5px; font-weight: 700;
+  color: var(--serve); letter-spacing: 0.04em;
+}
+.reg-act {
   border: none; background: transparent; cursor: pointer;
-  color: var(--muted); font-size: 17px; line-height: 1;
-  width: 20px; height: 20px; border-radius: 50%;
+  color: var(--muted); font-size: 15px; line-height: 1;
+  width: 24px; height: 24px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.reg-x:hover { background: rgba(255,91,91,0.18); color: var(--danger); }
+.reg-act:hover { background: rgba(255,91,91,0.18); color: var(--danger); }
+.reg-act.ok:hover { background: rgba(199,240,58,0.18); color: var(--serve); }
+@media (max-width: 520px) {
+  .reg-row { grid-template-columns: 20px minmax(60px, 1fr) 76px 24px 24px; }
+  .reg-dn { display: none; }
+  .reg-edit-fields { grid-template-columns: 1fr; }
+  .reg-row.editing { grid-template-columns: 20px 1fr 24px 24px; }
+}
 
 /* ---------- 觀眾看板（/）---------- */
 .spec-tabs { margin-bottom: 14px; }

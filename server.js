@@ -116,9 +116,30 @@ io.on('connection', (socket) => {
     const name = (p && p.name ? String(p.name) : '').trim();
     if (!name) return;
     const level = (p && p.level ? String(p.level) : '').trim();
-    registrations.push({ id: newRegId(), name, level, when: new Date().toISOString() });
+    // DUPR 帳號名與 DUPR ID 為選填；ID 統一存成大寫，比對時才不會因大小寫漏掉
+    const duprName = (p && p.duprName ? String(p.duprName) : '').trim();
+    const duprId = (p && p.duprId ? String(p.duprId) : '').trim().toUpperCase();
+    registrations.push({ id: newRegId(), name, level, duprName, duprId, when: new Date().toISOString() });
     saveReg();
     io.emit('reg:sync', registrations); // 廣播給所有裝置（含送出者）
+  });
+  // 手動修正已在名單中的選手資料（姓名／DUPR 帳號名／DUPR ID）
+  socket.on('reg:update', (p) => {
+    if (!p || !p.id) return;
+    registrations = registrations.map((r) => {
+      if (r.id !== p.id) return r;
+      const next = { ...r };
+      if (p.name !== undefined) {
+        const nm = String(p.name).trim();
+        if (nm) next.name = nm;
+      }
+      if (p.level !== undefined) next.level = String(p.level).trim();
+      if (p.duprName !== undefined) next.duprName = String(p.duprName).trim();
+      if (p.duprId !== undefined) next.duprId = String(p.duprId).trim().toUpperCase();
+      return next;
+    });
+    saveReg();
+    io.emit('reg:sync', registrations);
   });
   socket.on('reg:remove', (id) => {
     registrations = registrations.filter((r) => r.id !== id);
