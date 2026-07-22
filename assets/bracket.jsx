@@ -6,6 +6,26 @@
 const TB_LEVELS = ["2.0", "3.0"];
 const TB_PER_DIV = 12;
 
+// 強制寫入的配對名單（依正式抽籤結果固定；順序即第 1～6 隊）
+const TB_FORCED_PAIRS = {
+  "2.0": [
+    ["玉玫", "陳怡仁"],
+    ["珮怡", "江庭育"],
+    ["吳佩玲", "憶吟"],
+    ["Iris", "祈龍"],
+    ["賢益", "俞均"],
+    ["小跳", "victor"],
+  ],
+  "3.0": [
+    ["杜赫倫", "吳軒皓"],
+    ["其誠", "Dino"],
+    ["粲暘", "EthanHuang"],
+    ["韓璨宇", "東華"],
+    ["張1", "阿彤"],
+    ["Hester Han", "Raymond"],
+  ],
+};
+
 // 隊伍顯示：每位球員一欄「名字在上、DUPR ID 在下」，球員由左到右排列
 function TeamLabel({ team, win, dupr }) {
   if (!team) return <span style={{ color: "var(--muted)" }}>—</span>;
@@ -210,6 +230,18 @@ function TournamentScreen({ tournament, registrations, onDraw, onStartMatch, onB
     }));
     onDraw(inputs, { event, target, rule });
   }
+  // 強制寫入固定配對（不隨機）：直接採用 TB_FORCED_PAIRS 的名單與順序
+  function drawForced() {
+    const inputs = TB_LEVELS.map((lvl) => {
+      const pairs = TB_FORCED_PAIRS[lvl] || [];
+      return {
+        level: lvl,
+        names: pairs.reduce((a, pr) => a.concat(pr), []),
+        pairs,
+      };
+    });
+    onDraw(inputs, { event, target, rule });
+  }
 
   // ---------- 尚未抽籤（或舊格式）：輸入名單 ----------
   if (!tournament || !Array.isArray(tournament.divisions)) {
@@ -289,6 +321,7 @@ function TournamentScreen({ tournament, registrations, onDraw, onStartMatch, onB
 
           <div className="setup-foot">
             <button className="btn ghost" onClick={onBack}>← 返回</button>
+            <button className="btn ghost" onClick={drawForced}>✍️ 強制寫入配對</button>
             <button className="btn primary" onClick={draw}>🎲 抽籤分組 →</button>
           </div>
         </div>

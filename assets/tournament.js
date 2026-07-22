@@ -156,12 +156,23 @@
   }
 
   // 從 12 人抽籤配 6 對，並產生循環賽程（回傳一個 division 物件）
-  function buildDivision(di, level, names, pairCount, courtCount) {
-    pairCount = pairCount || DEFAULT_PAIR_COUNT;
+  // forcedPairs: [[a,b],...] 指定配對 → 依序組隊、不洗牌（強制寫入名單用）
+  function buildDivision(di, level, names, pairCount, courtCount, forcedPairs) {
     courtCount = courtCount || DEFAULT_COURTS;
-    var pool = shuffle((names || []).map(function (n, i) {
-      return (n && String(n).trim()) || ("球員 " + (i + 1));
-    }));
+    var pool;
+    if (forcedPairs && forcedPairs.length) {
+      pairCount = forcedPairs.length;
+      pool = [];
+      forcedPairs.forEach(function (pr) { pool.push(pr[0], pr[1]); });
+      pool = pool.map(function (n, i) {
+        return (n && String(n).trim()) || ("球員 " + (i + 1));
+      });
+    } else {
+      pairCount = pairCount || DEFAULT_PAIR_COUNT;
+      pool = shuffle((names || []).map(function (n, i) {
+        return (n && String(n).trim()) || ("球員 " + (i + 1));
+      }));
+    }
     var pairs = [];
     for (var p = 0; p < pairCount; p++) {
       var a = pool[p * 2], b = pool[p * 2 + 1];
@@ -194,7 +205,8 @@
   }
 
   // ---- 建立整場賽事：兩級別各抽籤 ----
-  // divisionInputs: [ {level, names:[10]}, {level, names:[10]} ]
+  // divisionInputs: [ {level, names:[12], pairs?:[[a,b]x6]}, ... ]
+  //   有給 pairs 時直接採用該配對（強制寫入），否則隨機抽籤
   // opts: { event, target, rule, groupBestOf, koBestOf }
   function drawTournament(divisionInputs, opts) {
     opts = opts || {};
@@ -203,7 +215,7 @@
       { level: DEFAULT_LEVELS[1], names: [] },
     ];
     var divisions = inputs.map(function (d, di) {
-      return buildDivision(di, d.level || DEFAULT_LEVELS[di] || String(di + 1), d.names, opts.pairCount, opts.courts);
+      return buildDivision(di, d.level || DEFAULT_LEVELS[di] || String(di + 1), d.names, opts.pairCount, opts.courts, d.pairs);
     });
     return {
       event: (opts.event && opts.event.trim()) || "匹克球分級循環賽",
