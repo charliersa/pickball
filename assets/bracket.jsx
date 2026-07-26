@@ -18,10 +18,10 @@ const TB_FORCED_PAIRS = {
   ],
   "3.0": [
     ["杜赫倫", "吳軒皓"],
-    ["其誠", "Dino"],
+    ["其誠", "Minami"],
     ["粲暘", "EthanHuang"],
-    ["韓璨宇", "東華"],
-    ["張1", "阿彤"],
+    ["永基", "東華"],
+    ["Lee Yung Shen", "阿彤"],
     ["Hester Han", "Raymond"],
   ],
 };
