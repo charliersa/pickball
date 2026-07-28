@@ -2,7 +2,8 @@
    匹克球賽事引擎  Tournament Engine（雙級別版）
    - 分 2.0 / 3.0 兩級別，各 12 人
    - 每級抽籤把 12 人配成 6 對固定雙打搭檔
-   - 6 對打循環賽（每對打其他 5 對，每級 15 場，排進 2 面場地 · 8 時段）
+   - 每級固定一面場地：2.0 級在場地 1、3.0 級在場地 2（兩級同時開打）
+   - 6 對打循環賽（每對打其他 5 對，每級 15 場，依序排 15 輪）
    - 積分：每對勝場優先、淨分次之
    - 淘汰賽：各級前 4 對 → 準決賽(1-4,2-3) → 決賽，各級各出一位冠軍
    純函式，無 React 依賴。所有 apply* 回傳「新的」tournament（深拷貝）。
@@ -14,7 +15,7 @@
   var PAIR_COLORS = ["#19C3FB", "#FF5B3A", "#C7F03A", "#A66BFF", "#FFC53D", "#FF4D9D"];
   var DEFAULT_LEVELS = ["2.0", "3.0"];
   var DEFAULT_PAIR_COUNT = 6; // 每級 12 人 → 6 對
-  var DEFAULT_COURTS = 2;     // 兩面場地
+  var DEFAULT_COURTS = 1;     // 每級各佔一面場地（第 di 級用第 di+1 面）
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
@@ -157,6 +158,7 @@
 
   // 從 12 人抽籤配 6 對，並產生循環賽程（回傳一個 division 物件）
   // forcedPairs: [[a,b],...] 指定配對 → 依序組隊、不洗牌（強制寫入名單用）
+  // 場地編號：第 di 級用 di*courtCount 起算的那幾面（courtCount=1 → 2.0 在場地 1、3.0 在場地 2）
   function buildDivision(di, level, names, pairCount, courtCount, forcedPairs) {
     courtCount = courtCount || DEFAULT_COURTS;
     var pool;
@@ -186,6 +188,7 @@
     }
 
     var rounds = roundRobinRounds(pairs.length);
+    var courtBase = di * courtCount;
     var matches = scheduleMatches(rounds, courtCount).map(function (sm) {
       return {
         id: "d" + di + "-s" + sm.slot + "-c" + sm.court,
@@ -194,7 +197,7 @@
         round: sm.round,
         pairIdx: [sm.i, sm.j],
         teams: [pairs[sm.i].players.slice(), pairs[sm.j].players.slice()],
-        court: sm.court,
+        court: courtBase + sm.court,
         slot: sm.slot,
         status: "pending",
         result: null,
@@ -301,16 +304,24 @@
     // 不足 4 對時用 null 補（極少見）
     while (top.length < 4) top.push(null);
 
+    // 淘汰賽沿用該級循環賽用的場地：只有一面就兩場準決賽依序打，兩面以上才並排
+    var used = [];
+    nt.divisions[di].matches.forEach(function (m) { if (used.indexOf(m.court) < 0) used.push(m.court); });
+    used.sort(function (a, b) { return a - b; });
+    var c0 = used.length ? used[0] : 0;
+    var c1 = used.length > 1 ? used[1] : c0;
+    var solo = c1 === c0;
+
     var koMatches = [
       { id: "ko-sf1", phase: "ko", roundName: "準決賽", division: di,
         teams: [top[0], top[3]], feeds: { match: "ko-final", slot: 0 },
-        court: 0, slot: 0, status: "pending", result: null, winner: null },
+        court: c0, slot: 0, status: "pending", result: null, winner: null },
       { id: "ko-sf2", phase: "ko", roundName: "準決賽", division: di,
         teams: [top[1], top[2]], feeds: { match: "ko-final", slot: 1 },
-        court: 1, slot: 0, status: "pending", result: null, winner: null },
+        court: c1, slot: solo ? 1 : 0, status: "pending", result: null, winner: null },
       { id: "ko-final", phase: "ko", roundName: "決賽", division: di,
         teams: [null, null], feeds: null,
-        court: 0, slot: 1, status: "pending", result: null, winner: null },
+        court: c0, slot: solo ? 2 : 1, status: "pending", result: null, winner: null },
     ];
 
     nt.divisions[di].ko = { seeds: top, matches: koMatches, champion: null };

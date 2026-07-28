@@ -1,6 +1,7 @@
 /* ============================================================
    賽事分配畫面（分級：2.0 / 3.0）
    每級 12 人 → 抽籤配 6 對 → 對循環賽 → 前 4 淘汰賽
+   2.0 級固定在場地 1、3.0 級固定在場地 2（兩級同時進行）
    純顯示 + 事件上拋；賽事狀態與同步由 App 管理。
    ============================================================ */
 const TB_LEVELS = ["2.0", "3.0"];
@@ -118,7 +119,7 @@ function DivisionView({ t, di, onStartMatch, onBuildKnockout, dupr }) {
   const d = t.divisions[di];
   const done = TB.divisionComplete(t, di);
   const courtMatches = (c) => d.matches.filter((m) => m.court === c).sort((a, b) => a.slot - b.slot);
-  // 依實際賽程動態決定場地數與輪數（6 對 · 2 場地 → 8 時段；引擎已排好 court / slot）
+  // 依實際賽程動態決定場地數與輪數（6 對 · 1 面場地 → 15 輪；引擎已排好 court / slot）
   const courts = Array.from(new Set(d.matches.map((m) => m.court))).sort((a, b) => a - b);
   const roundCount = d.matches.reduce((mx, m) => Math.max(mx, m.slot), 0) + 1;
 
