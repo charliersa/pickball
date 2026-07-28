@@ -18,14 +18,14 @@
 2. 吳佩玲/ PEILINGWU / P4KVOQ
 3. Iris / Iris Tsai / RDNP7D
 4. 江庭育/TingYu Jiang/ K5LQDQ
-   5.俞均 / 俞均陳 / KYNXX6
+   5.0 / hsu yiling / NNXML7
    6.祈龍/ Huangchilung/Q9GMDN
    7.victor/VICTOR Lee/PP9M0Q
    8.玉玫/Annie Chen/EVL7ME
    9.珮怡/Peggy Huang/0XZVOG
    10.憶吟/I Yin liu/OR990P
    11.小跳/Nathan Hong/6PJNDQ
-   12.0/hsu yiling/NNXML7
+   12.賢益/Fami Wu/WZNPVL
 
 3.0: (姓名/DUPR 帳號名/ DUPR ID)
 
