@@ -1,0 +1,17 @@
+{
+  "name": "匹克球比賽即時計分",
+  "short_name": "匹克球",
+  "description": "看板、計分台、報名三合一",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#06090F",
+  "theme_color": "#06090F",
+  "lang": "zh-Hant",
+  "icons": [
+    { "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

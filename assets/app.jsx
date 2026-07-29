@@ -313,10 +313,17 @@ function App() {
 }
 
 // ---- 依網址路徑決定角色 ----
-//   /register → 選手報名後台   /control → 操作者計分台   其餘 → 觀眾看板
+//   /register → 選手報名後台   /control → 操作者計分台
+//   /app      → 手機版三合一（底部分頁切換）   其餘 → 觀眾看板
 const _path = (location.pathname || "/").replace(/\/+$/, "") || "/";
-const ROLE = _path === "/register" ? "register" : _path === "/control" ? "control" : "spectator";
-const RootView = ROLE === "register" ? RegisterScreen : ROLE === "spectator" ? SpectatorApp : App;
+const ROLE = _path === "/register" ? "register"
+  : _path === "/control" ? "control"
+  : _path === "/app" ? "app"
+  : "spectator";
+const RootView = ROLE === "register" ? RegisterScreen
+  : ROLE === "app" ? MobileApp
+  : ROLE === "spectator" ? SpectatorApp
+  : App;
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ErrorBoundary><RootView /></ErrorBoundary>

@@ -33,6 +33,7 @@ function renderApp(res) {
 app.get('/', (req, res) => renderApp(res));
 app.get('/control', (req, res) => renderApp(res));
 app.get('/register', (req, res) => renderApp(res));
+app.get('/app', (req, res) => renderApp(res)); // 手機版三合一（看板／計分／報名）
 
 // 其餘靜態資源（CSS、engine.js、socket.io.js 等）
 app.use(express.static(__dirname));
