@@ -18,7 +18,7 @@ const TB_FORCED_PAIRS = {
     ["小跳", "victor"],
   ],
   "3.0": [
-    ["杜赫倫", "吳軒皓"],
+    ["杜赫倫", "chin cheng Liao"],
     ["其誠", "Minami"],
     ["粲暘", "EthanHuang"],
     ["永基", "東華"],

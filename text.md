@@ -36,7 +36,7 @@
 5. 粲暘/ye can yang/k5w6rk
 6. 其誠/chi Chen Tsai/4PKR52
 7. Minami/YEH NAN CHUN/RXWYGZ
-   8.吳軒皓 wu hsuanhao/QNJZMR
+   8.chin cheng Liao/chin cheng Liao/RXR5YE
    9.阿彤/劉阿彤/9DLMNJ
    10.EthanHuang/OW4XDL
    11.東華/6P9OLD
