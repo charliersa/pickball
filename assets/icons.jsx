@@ -20,3 +20,16 @@ function Icon({ name, ...p }) {
   );
 }
 window.Icon = Icon;
+
+// 各畫面右上角的導覽鈕：🏠 主頁（賽事分配頁）／📊 看板
+// 沒傳對應的 callback 就不顯示該顆按鈕
+function NavButtons({ onHome, onBoard }) {
+  if (!onHome && !onBoard) return null;
+  return (
+    <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", flex: "none" }}>
+      {onHome && <button className="btn ghost nav-btn" onClick={onHome}>🏠 主頁</button>}
+      {onBoard && <button className="btn ghost nav-btn" onClick={onBoard}>📊 看板</button>}
+    </div>
+  );
+}
+window.NavButtons = NavButtons;

@@ -261,6 +261,14 @@ function App() {
     broadcast(null, [], tournament);
   }
 
+  // 導覽：🏠 主頁＝賽事分配頁（沒抽過賽事就不顯示）；📊 看板＝合併版切到看板分頁，
+  // 獨立的 /control 則直接開觀眾看板頁
+  const goHome = tournament ? () => setScreen("tournament") : null;
+  function goBoard() {
+    if (window.__pbGoTab) window.__pbGoTab("board");
+    else window.location.href = "/";
+  }
+
   return (
     <div className="stage">
       <div className="app-bg" />
@@ -271,6 +279,8 @@ function App() {
           onResume={() => setScreen("match")}
           onStart={handleStart}
           onTournament={() => setScreen("tournament")}
+          onHome={goHome}
+          onBoard={goBoard}
         />
       )}
       {screen === "tournament" && (
@@ -282,6 +292,7 @@ function App() {
           onBuildKnockout={handleBuildKnockout}
           onReset={handleResetTournament}
           onBack={() => setScreen("setup")}
+          onBoard={goBoard}
         />
       )}
       {screen === "match" && st && (
@@ -295,6 +306,7 @@ function App() {
           onSwap={() => setDisplaySwap((v) => !v)}
           onHistory={() => setShowHistory(true)}
           onSettings={() => setScreen("setup")}
+          onHome={goHome}
         />
       )}
       {st && st.matchOver && screen === "match" && (

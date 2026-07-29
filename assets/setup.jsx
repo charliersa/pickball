@@ -3,7 +3,7 @@
    ============================================================ */
 const COLOR_OPTS = ["#19C3FB", "#FF5B3A", "#C7F03A", "#A66BFF", "#FF4D9D", "#2BD4A8", "#FFC53D", "#5B8CFF"];
 
-function SetupScreen({ onStart, initial, resumable, onResume, onTournament }) {
+function SetupScreen({ onStart, initial, resumable, onResume, onTournament, onHome, onBoard }) {
   const [event, setEvent] = React.useState(initial?.event ?? "匹克球友誼賽");
   const [mode, setMode] = React.useState(initial?.mode ?? "doubles");
   const [target, setTarget] = React.useState(initial?.target ?? 15);
@@ -36,10 +36,11 @@ function SetupScreen({ onStart, initial, resumable, onResume, onTournament }) {
       <div className="setup">
         <div className="setup-head">
           <div className="brand-mark"><Icon name="ball" stroke="#1a2a00" /></div>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h1>匹克球比賽即時計分</h1>
             <p>設定賽制與隊伍，開始記分 · 三局兩勝</p>
           </div>
+          <NavButtons onHome={onHome} onBoard={onBoard} />
         </div>
 
         <div className="card">

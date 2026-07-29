@@ -107,6 +107,8 @@ html, body {
   display: flex; flex-direction: column; gap: 24px;
 }
 .setup-head { display: flex; align-items: center; gap: 16px; }
+/* 標題列右側的「🏠 主頁 / 📊 看板」導覽鈕，不隨畫面捲動被推到看不見的地方 */
+.nav-btn { font-size: 13.5px; padding: 9px 13px; white-space: nowrap; }
 .brand-mark {
   width: 52px; height: 52px; border-radius: 14px;
   background: linear-gradient(150deg, var(--serve), #7FA518);
@@ -535,8 +537,11 @@ html, body {
 
   /* 設定畫面 */
   .setup { padding: 18px 14px 40px; gap: 14px; }
+  .setup-head { gap: 10px; }
   .setup-head h1 { font-size: 20px; }
   .setup-head p { font-size: 13px; }
+  .nav-btn { font-size: 12px; padding: 8px 10px; }
+  .setup-foot .btn.nav-btn { width: auto; }
   .brand-mark { width: 42px; height: 42px; border-radius: 11px; }
   .brand-mark svg { width: 24px; height: 24px; }
   .card { padding: 16px; }

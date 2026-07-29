@@ -119,6 +119,12 @@ function MobileApp() {
     history.replaceState(null, "", "#" + tab);
   }, [tab]);
 
+  // 讓計分台裡的「📊 看板」按鈕能切到看板分頁
+  React.useEffect(() => {
+    window.__pbGoTab = setTab;
+    return () => { delete window.__pbGoTab; };
+  }, []);
+
   // 支援手機的上一頁／下一頁
   React.useEffect(() => {
     const onHash = () => {

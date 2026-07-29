@@ -196,7 +196,7 @@ function ScoreInputPanel({ st, onGameScore }) {
   );
 }
 
-function Scoreboard({ st, displaySwap, onRally, onGameScore, onUndo, canUndo, onSwap, onHistory, onSettings }) {
+function Scoreboard({ st, displaySwap, onRally, onGameScore, onUndo, canUndo, onSwap, onHistory, onSettings, onHome }) {
   const [inputMode, setInputMode] = React.useState(false);
   const order = displaySwap ? [1, 0] : [0, 1];
   const showSwitch = st.switchEnds;
@@ -228,6 +228,7 @@ function Scoreboard({ st, displaySwap, onRally, onGameScore, onUndo, canUndo, on
           </div>
         </div>
         <div className="top-chips">
+          {onHome && <button className="icon-btn" onClick={onHome} title="回主頁（賽事分配）"><Icon name="home" /></button>}
           <button className="icon-btn" onClick={onHistory} title="歷史紀錄"><Icon name="history" /></button>
           <button className="icon-btn" onClick={onSettings} title="新比賽 / 設定"><Icon name="settings" /></button>
         </div>

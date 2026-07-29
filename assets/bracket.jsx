@@ -200,7 +200,7 @@ function DivisionView({ t, di, onStartMatch, onBuildKnockout, dupr }) {
   );
 }
 
-function TournamentScreen({ tournament, registrations, onDraw, onStartMatch, onBuildKnockout, onReset, onBack }) {
+function TournamentScreen({ tournament, registrations, onDraw, onStartMatch, onBuildKnockout, onReset, onBack, onBoard }) {
   const [names, setNames] = React.useState(() => TB_LEVELS.map(() => Array.from({ length: TB_PER_DIV }, () => "")));
   const [event, setEvent] = React.useState("玩轉基地729 DUPR雙打循環賽");
   const [target, setTarget] = React.useState(15);
@@ -322,6 +322,7 @@ function TournamentScreen({ tournament, registrations, onDraw, onStartMatch, onB
 
           <div className="setup-foot">
             <button className="btn ghost" onClick={onBack}>← 返回</button>
+            {onBoard && <button className="btn ghost" onClick={onBoard}>📊 看板</button>}
             <button className="btn ghost" onClick={drawForced}>✍️ 強制寫入配對</button>
             <button className="btn primary" onClick={draw}>🎲 抽籤分組 →</button>
           </div>
@@ -339,10 +340,11 @@ function TournamentScreen({ tournament, registrations, onDraw, onStartMatch, onB
       <div className="setup" style={{ maxWidth: 900 }}>
         <div className="setup-head">
           <div className="brand-mark"><Icon name="ball" stroke="#1a2a00" /></div>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h1>{t.event}</h1>
             <p>{t.divisions.length} 級別 · 每級 {t.divisions[0].pairs.length} 對循環 · {t.target} 分{t.rule === "rally" ? " · Rally" : ""}</p>
           </div>
+          <NavButtons onBoard={onBoard} />
         </div>
 
         {/* 級別分頁 */}
