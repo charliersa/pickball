@@ -40,7 +40,7 @@ app.get('/app', (req, res) => renderApp(res)); // 手機版三合一（看板／
 // 要改密碼：在 Render 設環境變數 HOST_PASSCODE（未設時用下面的預設值）。
 // 注意：這是「畫面層」的鎖，擋的是選手誤按與隨手轉發連結；
 // 它不會擋掉直接對 socket 送指令的人，真要嚴格控管需再加 socket 驗證。
-const HOST_PASSCODE = String(process.env.HOST_PASSCODE || '729729');
+const HOST_PASSCODE = String(process.env.HOST_PASSCODE || '00000000');
 app.use(express.json());
 app.post('/api/host-check', (req, res) => {
   const code = String((req.body && req.body.code) || '').trim();
