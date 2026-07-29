@@ -320,10 +320,12 @@ const ROLE = _path === "/register" ? "register"
   : _path === "/control" ? "control"
   : _path === "/app" ? "app"
   : "spectator";
+// 計分台（/control 與 /app 的計分分頁）一律要密碼，見 mobileapp.jsx 的 HostGate
+function ControlView() { return <HostGate><App /></HostGate>; }
 const RootView = ROLE === "register" ? RegisterScreen
   : ROLE === "app" ? MobileApp
   : ROLE === "spectator" ? SpectatorApp
-  : App;
+  : ControlView;
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ErrorBoundary><RootView /></ErrorBoundary>

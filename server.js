@@ -35,6 +35,18 @@ app.get('/control', (req, res) => renderApp(res));
 app.get('/register', (req, res) => renderApp(res));
 app.get('/app', (req, res) => renderApp(res)); // 手機版三合一（看板／計分／報名）
 
+// ---- 計分台密碼 ----
+// 工作人員專用。密碼放伺服器比對，不會出現在網頁原始碼裡。
+// 要改密碼：在 Render 設環境變數 HOST_PASSCODE（未設時用下面的預設值）。
+// 注意：這是「畫面層」的鎖，擋的是選手誤按與隨手轉發連結；
+// 它不會擋掉直接對 socket 送指令的人，真要嚴格控管需再加 socket 驗證。
+const HOST_PASSCODE = String(process.env.HOST_PASSCODE || '729729');
+app.use(express.json());
+app.post('/api/host-check', (req, res) => {
+  const code = String((req.body && req.body.code) || '').trim();
+  res.json({ ok: code !== '' && code === HOST_PASSCODE });
+});
+
 // 其餘靜態資源（CSS、engine.js、socket.io.js 等）
 app.use(express.static(__dirname));
 
