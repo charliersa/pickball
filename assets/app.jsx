@@ -77,6 +77,9 @@ function saveJSON(key, v) {
   try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
 }
 
+// 換過名的選手就地改名（對照表與實作見 tournament.js 的 NAME_FIXES）
+const fixNames = (v) => TB.fixNames(v);
+
 // 只接受目前的雙級別賽事格式；舊版存檔（無 divisions）一律丟棄，避免 crash
 function isValidTournament(t) {
   return !!(t && Array.isArray(t.divisions) && t.divisions.every(
@@ -85,7 +88,7 @@ function isValidTournament(t) {
 }
 function loadTournament() {
   const t = loadJSON(LS_TOURNAMENT, null);
-  if (isValidTournament(t)) return t;
+  if (isValidTournament(t)) return fixNames(t);
   if (t) localStorage.removeItem(LS_TOURNAMENT); // 清掉不相容的舊存檔
   return null;
 }
@@ -135,9 +138,9 @@ function App() {
     if (!s) return;
     socketRef.current = s;
     s.on('state:sync', ({ st: newSt, undoStack: newUndo, tournament: newT }) => {
-      setSt(newSt ?? null);
-      setUndoStack(newUndo ?? []);
-      if (newT !== undefined) setTournament(isValidTournament(newT) ? newT : null);
+      setSt(newSt ? fixNames(newSt) : null);
+      setUndoStack(newUndo ? fixNames(newUndo) : []);
+      if (newT !== undefined) setTournament(isValidTournament(newT) ? fixNames(newT) : null);
       if (newSt) setScreen("match");
     });
     s.on('reg:sync', (rows) => setRegistrations(Array.isArray(rows) ? rows : []));

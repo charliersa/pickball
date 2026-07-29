@@ -19,6 +19,28 @@
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
+  // 名單替換後的改名對照：抽籤當下把選手名字「字串」存進賽事狀態，
+  // 之後改報名名單不會回頭改它，舊存檔／舊裝置會一直顯示舊名字（且查不到 DUPR ID）。
+  // fixNames 在載入與同步時就地換名，不必重抽配對、也不會清掉已打的成績。
+  // 換人時：這裡加一筆，並同步改 bracket.jsx 的 TB_FORCED_PAIRS 與報名名單。
+  var NAME_FIXES = { "吳軒皓": "chin cheng Liao" };
+  function fixNames(v) {
+    if (typeof v === "string") {
+      var s = v;
+      Object.keys(NAME_FIXES).forEach(function (from) {
+        if (s.indexOf(from) >= 0) s = s.split(from).join(NAME_FIXES[from]);
+      });
+      return s;
+    }
+    if (Array.isArray(v)) return v.map(fixNames);
+    if (v && typeof v === "object") {
+      var o = {};
+      Object.keys(v).forEach(function (k) { o[k] = fixNames(v[k]); });
+      return o;
+    }
+    return v;
+  }
+
   function shuffle(arr) {
     var a = arr.slice();
     for (var i = a.length - 1; i > 0; i--) {
@@ -366,6 +388,8 @@
     findMatch: findMatch,
     matchReady: matchReady,
     clone: clone,
+    fixNames: fixNames,
+    NAME_FIXES: NAME_FIXES,
     PAIR_COLORS: PAIR_COLORS,
     DEFAULT_LEVELS: DEFAULT_LEVELS,
     DEFAULT_PAIR_COUNT: DEFAULT_PAIR_COUNT,

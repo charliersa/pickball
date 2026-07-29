@@ -222,8 +222,8 @@ function SpectatorApp() {
     const s = initSocket();
     if (!s) return;
     s.on("state:sync", ({ st: newSt, tournament: newT }) => {
-      setSt(newSt ?? null);
-      if (newT !== undefined) setTournament(isValidTournament(newT) ? newT : null);
+      setSt(newSt ? TB.fixNames(newSt) : null);
+      if (newT !== undefined) setTournament(isValidTournament(newT) ? TB.fixNames(newT) : null);
     });
     s.on("reg:sync", (rows) => setRegistrations(Array.isArray(rows) ? rows : []));
     return () => { s.disconnect(); };
