@@ -1,7 +1,7 @@
 /* ============================================================
    觀眾看板（/）— 唯讀
    即時同步操作者的比賽狀態，分頁顯示：
-     即時比分 · 積分榜 · 對戰表 · 賽果
+     即時比分 · 積分榜 · 對戰表 · 賽果（可匯出 PDF）
    重用 scoreboard.jsx / bracket.jsx 的顯示元件（babel 頂層函式為全域）。
    ============================================================ */
 
@@ -167,7 +167,7 @@ function SpecDivisionView({ t, di, view, dupr }) {
 }
 
 // 賽果：彙整所有分級「已完成」的比賽（循環 + 淘汰）
-function SpecResults({ t }) {
+function specResultRows(t) {
   const rows = [];
   t.divisions.forEach((d, di) => {
     d.matches.forEach((m) => {
@@ -177,6 +177,95 @@ function SpecResults({ t }) {
       if (m.status === "done" && m.result) rows.push({ di, level: d.level, label: m.roundName, m });
     });
   });
+  return rows;
+}
+
+// ---- 賽果匯出 PDF ----
+// 不外掛任何套件：組一份白底 A4 版面塞進隱藏 iframe，叫瀏覽器列印，
+// 使用者在列印對話框選「另存為 PDF」即可（手機 Chrome / Safari 也有這個選項）。
+function specEsc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+function specResultsPrintHTML(t) {
+  const rows = specResultRows(t);
+  const when = new Date().toLocaleString("zh-TW", { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  const sections = t.divisions.map((d, di) => {
+    const mine = rows.filter((r) => r.di === di);
+    if (mine.length === 0) return "";
+    const champ = d.ko && d.ko.champion ? `<p class="champ">🏆 ${specEsc(d.level)} 級冠軍：${specEsc(d.ko.champion.name)}</p>` : "";
+    const trs = mine.map((r) => {
+      const m = r.m, res = r.m.result, w = res.winner;
+      const games = res.games.map((g) => `${g.scores[0]}:${g.scores[1]}`).join("、");
+      const nm = (side) => `<span class="${side === w ? "win" : ""}">${specEsc(specTeamNames(m.teams[side]))}</span>`;
+      return `<tr>
+        <td class="dim">${specEsc(r.label)}</td>
+        <td>${nm(0)}</td><td class="vs">vs</td><td>${nm(1)}</td>
+        <td class="num">${specEsc(games)}</td>
+        <td>${specEsc(specTeamNames(m.teams[w]))}</td>
+      </tr>`;
+    }).join("");
+    return `<section>
+      <h2>${specEsc(d.level)} 級（${mine.length} 場）</h2>
+      ${champ}
+      <table><thead><tr><th>場次</th><th colspan="3">對戰</th><th>比分</th><th>勝方</th></tr></thead>
+      <tbody>${trs}</tbody></table>
+    </section>`;
+  }).join("");
+
+  return `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<title>${specEsc(t.event)} · 賽果</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #111; background: #fff;
+    font-family: "PingFang TC","Microsoft JhengHei","Noto Sans TC","Helvetica Neue",Arial,sans-serif; font-size: 11pt; }
+  h1 { font-size: 17pt; margin: 0 0 2mm; }
+  .sub { color: #666; font-size: 9.5pt; margin: 0 0 6mm; }
+  section { margin-bottom: 7mm; page-break-inside: auto; }
+  h2 { font-size: 12.5pt; margin: 0 0 2mm; padding-bottom: 1.5mm; border-bottom: 1.5pt solid #111; }
+  .champ { margin: 0 0 2mm; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 1.8mm 2mm; border-bottom: 0.5pt solid #ccc; vertical-align: middle; }
+  th { font-size: 9pt; color: #444; background: #f2f2f2; }
+  tr { page-break-inside: avoid; }
+  .dim { color: #666; font-size: 9pt; white-space: nowrap; }
+  .vs { color: #888; font-size: 9pt; text-align: center; width: 8mm; }
+  .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .win { font-weight: 800; }
+  footer { margin-top: 6mm; color: #888; font-size: 8.5pt; }
+</style></head><body>
+<h1>${specEsc(t.event)} · 賽果</h1>
+<p class="sub">${t.divisions.length} 級別 · ${specEsc(String(t.target))} 分${t.rule === "rally" ? " · Rally" : " · 發球得分制"} ｜ 匯出時間 ${specEsc(when)}</p>
+${sections || "<p>尚無已完成的比賽。</p>"}
+<footer>由匹克球即時計分系統產生</footer>
+</body></html>`;
+}
+
+function specExportResultsPDF(t) {
+  const html = specResultsPrintHTML(t);
+  const frame = document.createElement("iframe");
+  frame.setAttribute("aria-hidden", "true");
+  frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+  document.body.appendChild(frame);
+  const doc = frame.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  // 等 iframe 內容排版完成再列印；列印對話框關閉後移除
+  setTimeout(() => {
+    try {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+    } catch (e) {
+      // iframe 列印失敗（少數手機瀏覽器）→ 退回開新分頁列印
+      const w = window.open("", "_blank");
+      if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 400); }
+    }
+    setTimeout(() => frame.remove(), 60000);
+  }, 350);
+}
+
+function SpecResults({ t }) {
+  const rows = specResultRows(t);
 
   if (rows.length === 0) {
     return <div className="hist-empty">尚無已完成的比賽<br />比賽結束後賽果會顯示於此</div>;
@@ -244,6 +333,7 @@ function SpectatorApp() {
 
   const hasT = !!(tournament && Array.isArray(tournament.divisions));
   const divIdx = hasT ? Math.min(di, tournament.divisions.length - 1) : 0;
+  const resultCount = hasT ? specResultRows(tournament).length : 0;
 
   const TABS = [
     { key: "live", label: "即時比分" },
@@ -298,7 +388,15 @@ function SpectatorApp() {
 
         {tab === "result" && (
           <div className="card">
-            <h2>賽果</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 2 }}>
+              <h2 style={{ margin: 0, flex: 1 }}>賽果</h2>
+              {resultCount > 0 && (
+                <button className="btn ghost" style={{ padding: "6px 12px", fontSize: 13 }}
+                  onClick={() => specExportResultsPDF(tournament)} title="開啟列印視窗，選「另存為 PDF」">
+                  📄 匯出 PDF
+                </button>
+              )}
+            </div>
             {hasT ? <SpecResults t={tournament} />
                   : <div className="hist-empty">尚未建立賽事<br />比賽結束後賽果會顯示於此</div>}
           </div>

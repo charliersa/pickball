@@ -23,7 +23,7 @@
   // 之後改報名名單不會回頭改它，舊存檔／舊裝置會一直顯示舊名字（且查不到 DUPR ID）。
   // fixNames 在載入與同步時就地換名，不必重抽配對、也不會清掉已打的成績。
   // 換人時：這裡加一筆，並同步改 bracket.jsx 的 TB_FORCED_PAIRS 與報名名單。
-  var NAME_FIXES = { "吳軒皓": "chin cheng Liao" };
+  var NAME_FIXES = { "吳軒皓": "chin cheng Liao", "俞均": "0" };
   function fixNames(v) {
     if (typeof v === "string") {
       var s = v;
